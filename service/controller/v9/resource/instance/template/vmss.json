@@ -251,6 +251,7 @@
                 "properties":{
                   "enableIPForwarding":true,
                   "primary":"true",
+                  "enableAcceleratedNetworking": "true",
                   "ipConfigurations":[
                     {
                       "name":"[concat(parameters('vmssName'), '-ipconfig')]",
