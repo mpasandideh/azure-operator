@@ -305,7 +305,7 @@
 
 [[projects]]
   branch = "kubelet-configmap"
-  digest = "1:85bbc24c251f50f2afb2c64481744bedfe770d2f00a4e1e255fae878fd8a5ac5"
+  digest = "1:42f961876a0b6c3b9596176c043c241f2ccb2950db3b7df29cdde8c75d6caa9d"
   name = "github.com/giantswarm/k8scloudconfig"
   packages = [
     "ignition/v_2_2_0",
@@ -318,7 +318,7 @@
     "v_4_8_0",
   ]
   pruneopts = "T"
-  revision = "e020cfc860ce920cdf541ac92d9637e66dd6ed30"
+  revision = "a0b9ac0f223ac246763621becb26c5376fcdbccd"
 
 [[projects]]
   branch = "master"
