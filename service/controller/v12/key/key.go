@@ -245,6 +245,18 @@ func IsSucceededProvisioningState(s string) bool {
 	return false
 }
 
+// MasterDockerVolumeSizeGB returns Docker volume size in GB for master node with
+// specified index.
+func MasterDockerVolumeSizeGB(customObject providerv1alpha1.AzureConfig, index int) int {
+	return customObject.Spec.Azure.Masters[index].DockerVolumeSizeGB
+}
+
+// MasterKubeletVolumeSizeGB returns kubelet volume size in GB for master node with
+// specified index.
+func MasterKubeletVolumeSizeGB(customObject providerv1alpha1.AzureConfig, index int) int {
+	return customObject.Spec.Azure.Masters[index].KubeletVolumeSizeGB
+}
+
 // MasterSecurityGroupName returns name of the security group attached to master subnet.
 func MasterSecurityGroupName(customObject providerv1alpha1.AzureConfig) string {
 	return fmt.Sprintf("%s-%s", ClusterID(customObject), masterSecurityGroupSuffix)
@@ -474,6 +486,12 @@ func VPNGatewayName(customObject providerv1alpha1.AzureConfig) string {
 	return fmt.Sprintf("%s-%s", ClusterID(customObject), vpnGatewaySuffix)
 }
 
+// WorkerDockerVolumeSizeGB returns Docker volume size in GB for worker node with
+// specified index.
+func WorkerDockerVolumeSizeGB(customObject providerv1alpha1.AzureConfig, index int) int {
+	return customObject.Spec.Azure.Workers[index].DockerVolumeSizeGB
+}
+
 func WorkerInstanceName(customObject providerv1alpha1.AzureConfig, instanceID string) (string, error) {
 	idB36, err := vmssInstanceIDBase36(instanceID)
 	if err != nil {
@@ -481,6 +499,12 @@ func WorkerInstanceName(customObject providerv1alpha1.AzureConfig, instanceID st
 	}
 
 	return fmt.Sprintf("%s-worker-%06s", ClusterID(customObject), idB36), nil
+}
+
+// WorkerKubeletVolumeSizeGB returns kubelet volume size in GB for worker node with
+// specified index.
+func WorkerKubeletVolumeSizeGB(customObject providerv1alpha1.AzureConfig, index int) int {
+	return customObject.Spec.Azure.Workers[index].KubeletVolumeSizeGB
 }
 
 func WorkerVMSSName(customObject providerv1alpha1.AzureConfig) string {

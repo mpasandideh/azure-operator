@@ -19,6 +19,7 @@ const (
 	DeploymentCompleted    = "DeploymentCompleted"
 	InstancesUpgrading     = "InstancesUpgrading"
 	ProvisioningSuccessful = "ProvisioningSuccessful"
+	DiskResizeInitialized  = "DiskResizeInitialized"
 )
 
 func (r *Resource) deleteResourceStatus(customObject providerv1alpha1.AzureConfig, t string, s string) error {

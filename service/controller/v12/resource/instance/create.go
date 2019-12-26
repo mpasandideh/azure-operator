@@ -224,8 +224,9 @@ func (r *Resource) EnsureCreated(ctx context.Context, obj interface{}) error {
 		}
 
 		var masterUpgradeInProgress bool
+		var allMasterInstances []compute.VirtualMachineScaleSetVM
 		{
-			allMasterInstances, err := r.allInstances(ctx, customObject, key.MasterVMSSName)
+			allMasterInstances, err = r.allInstances(ctx, customObject, key.MasterVMSSName)
 			if IsScaleSetNotFound(err) {
 				r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("did not find the scale set '%s'", key.MasterVMSSName(customObject)))
 			} else if err != nil {
@@ -270,8 +271,9 @@ func (r *Resource) EnsureCreated(ctx context.Context, obj interface{}) error {
 		// version information. The next reconciliation loop will catch up here
 		// and instruct the worker instance to be reimaged again.
 		var workerUpgradeInProgess bool
+		var allWorkerInstances []compute.VirtualMachineScaleSetVM
 		if !masterUpgradeInProgress {
-			allWorkerInstances, err := r.allInstances(ctx, customObject, key.WorkerVMSSName)
+			allWorkerInstances, err = r.allInstances(ctx, customObject, key.WorkerVMSSName)
 			if IsScaleSetNotFound(err) {
 				r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("did not find the scale set '%s'", key.WorkerVMSSName(customObject)))
 			} else if err != nil {
@@ -311,16 +313,85 @@ func (r *Resource) EnsureCreated(ctx context.Context, obj interface{}) error {
 		if !masterUpgradeInProgress && !workerUpgradeInProgess {
 			r.logger.LogCtx(ctx, "level", "debug", "message", "neither masters nor workers upgraded")
 
-			r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("setting resource status to '%s/%s'", Stage, DeploymentCompleted))
-
-			err := r.setResourceStatus(customObject, Stage, DeploymentCompleted)
+			r.logger.LogCtx(ctx, "level", "debug", "message", "checking if there is an instance which has disk that has to be resized")
+			masterInstancesCheck := diskResizeCheckParams{
+				Instances:               allMasterInstances,
+				DockerVolumeIndex:       masterDockerVolumeIndex,
+				DockerVolumeSizeGBFunc:  key.MasterDockerVolumeSizeGB,
+				KubeletVolumeIndex:      masterKubeletVolumeIndex,
+				KubeletVolumeSizeGBFunc: key.MasterKubeletVolumeSizeGB,
+				InstanceNameFunc:        key.MasterInstanceName,
+			}
+			workerInstancesCheck := diskResizeCheckParams{
+				Instances:               allWorkerInstances,
+				DockerVolumeIndex:       workerDockerVolumeIndex,
+				DockerVolumeSizeGBFunc:  key.WorkerDockerVolumeSizeGB,
+				KubeletVolumeIndex:      workerKubeletVolumeIndex,
+				KubeletVolumeSizeGBFunc: key.WorkerKubeletVolumeSizeGB,
+				InstanceNameFunc:        key.WorkerInstanceName,
+			}
+			isDiskResizeNextStage, err := r.instanceWithChangedVolumeExists(ctx, customObject, masterInstancesCheck, workerInstancesCheck)
 			if err != nil {
 				return microerror.Mask(err)
 			}
 
-			r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("set resource status to '%s/%s'", Stage, DeploymentCompleted))
+			if isDiskResizeNextStage {
+				r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("setting resource status to '%s/%s'", Stage, DiskResizeInitialized))
 
-			r.logger.LogCtx(ctx, "level", "debug", "message", "canceling resource")
+				err := r.setResourceStatus(customObject, Stage, DiskResizeInitialized)
+				if err != nil {
+					return microerror.Mask(err)
+				}
+
+				r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("set resource status to '%s/%s'", Stage, DiskResizeInitialized))
+			} else {
+				r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("setting resource status to '%s/%s'", Stage, DeploymentCompleted))
+
+				err := r.setResourceStatus(customObject, Stage, DeploymentCompleted)
+				if err != nil {
+					return microerror.Mask(err)
+				}
+
+				r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("set resource status to '%s/%s'", Stage, DeploymentCompleted))
+				r.logger.LogCtx(ctx, "level", "debug", "message", "canceling resource")
+			}
+		}
+	}
+
+	if hasResourceStatus(customObject, Stage, DiskResizeInitialized) {
+		allMasterInstances, err := r.allInstances(ctx, customObject, key.MasterVMSSName)
+		if IsScaleSetNotFound(err) {
+			r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("did not find the scale set '%s'", key.MasterVMSSName(customObject)))
+		} else if err != nil {
+			return microerror.Mask(err)
+		} else {
+			masterInstancesCheck := diskResizeCheckParams{
+				Instances:               allMasterInstances,
+				DockerVolumeIndex:       masterDockerVolumeIndex,
+				DockerVolumeSizeGBFunc:  key.MasterDockerVolumeSizeGB,
+				KubeletVolumeIndex:      masterKubeletVolumeIndex,
+				KubeletVolumeSizeGBFunc: key.MasterKubeletVolumeSizeGB,
+				InstanceNameFunc:        key.MasterInstanceName,
+			}
+
+			resizeMastersDisksDone, err := r.resizeMasterDisk(ctx, customObject, masterInstancesCheck)
+			if err != nil {
+				return microerror.Mask(err)
+			}
+
+			// TODO: resize worker disk
+
+			if resizeMastersDisksDone {
+				r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("setting resource status to '%s/%s'", Stage, DeploymentCompleted))
+
+				err := r.setResourceStatus(customObject, Stage, DeploymentCompleted)
+				if err != nil {
+					return microerror.Mask(err)
+				}
+
+				r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("set resource status to '%s/%s'", Stage, DeploymentCompleted))
+				r.logger.LogCtx(ctx, "level", "debug", "message", "canceling resource")
+			}
 		}
 	}
 
