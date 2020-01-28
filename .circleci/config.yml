@@ -115,14 +115,14 @@ jobs:
     environment:
       TESTED_VERSION: "wip"
       TEST_DIR: "integration/test/multiaz"
-      IGNITION_ADDITIONS: "${TEST_DIR}/ignition_additions"
-      LOGENTRIES_PREFIX_VAR: "${CIRCLE_SHA1:0:5}"
-      LOGENTRIES_TOKEN_VAR: "${LOGENTRIES_TOKEN}"
     <<: *e2eTest
   e2eTestWIPPRMultiAZ:
     environment:
       TESTED_VERSION: "wip"
       TEST_DIR: "integration/test/multiaz"
+      IGNITION_ADDITIONS: "${TEST_DIR}/ignition_additions"
+      LOGENTRIES_PREFIX_VAR: "${CIRCLE_SHA1:0:5}"
+      LOGENTRIES_TOKEN_VAR: "${LOGENTRIES_TOKEN}"
     <<: *e2eTest
 
 
@@ -172,9 +172,9 @@ workflows:
 #     - e2eTestWIPMasterClusterState:
 #         requires:
 #         - master
-      - e2eTestCurPRClusterState:
-          requires:
-          - pr
+#      - e2eTestCurPRClusterState:
+#          requires:
+#          - pr
       - e2eTestWIPPRClusterState:
           requires:
           - pr
@@ -187,27 +187,27 @@ workflows:
 #     - e2eTestWIPMasterScaling:
 #         requires:
 #         - master
-      - e2eTestCurPRScaling:
-          requires:
-          - pr
-      - e2eTestWIPPRScaling:
-          requires:
-          - pr
+#      - e2eTestCurPRScaling:
+#          requires:
+#          - pr
+#      - e2eTestWIPPRScaling:
+#          requires:
+#          - pr
 
 
 
 #      - e2eTestCurPRMultiAZ:
 #          requires:
 #          - pr
-      - e2eTestWIPPRMultiAZ:
-          requires:
-          - pr
+#      - e2eTestWIPPRMultiAZ:
+#          requires:
+#          - pr
 
 
 
 #     - e2eTestCurMasterUpdate:
 #         requires:
 #         - master
-      - e2eTestCurPRUpdate:
-          requires:
-          - pr
+#      - e2eTestCurPRUpdate:
+#          requires:
+#          - pr
