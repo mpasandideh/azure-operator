@@ -7,7 +7,7 @@ e2eTest: &e2eTest
       wget -q $(curl -sS https://api.github.com/repos/giantswarm/e2e-harness/releases/latest | grep browser_download_url | head -n 1 | cut -d '"' -f 4)
       chmod +x ./e2e-harness
   - run: |
-      if [ -z "$LOGENTRIES_TOKEN_VAR" ]; envsubst < ${IGNITION_ADDITIONS}/logentries.yaml > ${IGNITION_ADDITIONS}/logentries.yaml
+      if [ -z "$LOGENTRIES_TOKEN_VAR" ]; envsubst < ${IGNITION_ADDITION_PATH}/logentries.yaml > ${IGNITION_ADDITION_PATH}/logentries.yaml
   - run: ./e2e-harness localkube
   - run: ./e2e-harness setup --remote=false
   - run:
@@ -74,6 +74,9 @@ jobs:
     environment:
       TESTED_VERSION: "wip"
       TEST_DIR: "integration/test/clusterstate"
+      IGNITION_ADDITION_PATH: "${TEST_DIR}/ignition_additions"
+      LOGENTRIES_PREFIX_VAR: "${CIRCLE_SHA1:0:5}"
+      LOGENTRIES_TOKEN_VAR: "${LOGENTRIES_TOKEN}"
     <<: *e2eTest
 
 
@@ -120,9 +123,6 @@ jobs:
     environment:
       TESTED_VERSION: "wip"
       TEST_DIR: "integration/test/multiaz"
-      IGNITION_ADDITIONS: "${TEST_DIR}/ignition_additions"
-      LOGENTRIES_PREFIX_VAR: "${CIRCLE_SHA1:0:5}"
-      LOGENTRIES_TOKEN_VAR: "${LOGENTRIES_TOKEN}"
     <<: *e2eTest
 
 

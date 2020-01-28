@@ -1,0 +1,28 @@
+ignition:
+  version: "2.2.0"
+storage:
+  files:
+    - path: /opt/bin/logentries.sh
+      filesystem: root
+      mode: 0555
+      user:
+        id: 0
+      group:
+        id: 0
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,IyEvYmluL3NoCgpMT0dFTlRSSUVTX1BSRUZJWD0kMQpMT0dFTlRSSUVTX1RPS0VOPSQyCgpqb3VybmFsY3RsIC1vIGpzb24gLWYgfCBqcSAtciAtLWFyZyBMT0dFTlRSSUVTX1BSRUZJWCAiJHtMT0dFTlRSSUVTX1BSRUZJWH0iICckTE9HRU5UUklFU19QUkVGSVggKyAiICIgKyAuX19SRUFMVElNRV9USU1FU1RBTVAgKyAiICIgKyAuX0hPU1ROQU1FICsgIiAiICsgLl9TWVNURU1EX1VOSVQgKyAiICIgKyAuTUVTU0FHRScgfCBhd2sgLXYgTE9HRU5UUklFU19UT0tFTj0ke0xPR0VOVFJJRVNfVE9LRU59ICd7IHByaW50IExPR0VOVFJJRVNfVE9LRU4sICQwOyBmZmx1c2goKTsgfScgfCBuY2F0IGRhdGEubG9nZW50cmllcy5jb20gMTAwMDAK"
+systemd:
+  units:
+  - name: logentries.service
+    enabled: true
+    contents: |
+      [Unit]
+      Description=Logentries
+
+      [Service]
+      Environment=LOGENTRIES_PREFIX=${LOGENTRIES_PREFIX_VAR}
+      Environment=LOGENTRIES_TOKEN=${LOGENTRIES_TOKEN_VAR}
+      ExecStart=/bin/sh /opt/bin/logentries.sh ${LOGENTRIES_PREFIX} ${LOGENTRIES_TOKEN}
+
+      [Install]
+      WantedBy=multi-user.target

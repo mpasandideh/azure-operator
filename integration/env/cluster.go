@@ -6,19 +6,26 @@ import (
 )
 
 const (
-	EnvVarCommonDomain = "COMMON_DOMAIN"
-	EnvVarVaultToken   = "VAULT_TOKEN"
+	EnvVarCommonDomain         = "COMMON_DOMAIN"
+	EnvVarIgnitionAdditionPath = "IGNITION_ADDITION_PATH"
+	EnvVarVaultToken           = "VAULT_TOKEN"
 )
 
 var (
-	commonDomain string
-	vaultToken   string
+	commonDomain         string
+	ignitionAdditionPath string
+	vaultToken           string
 )
 
 func init() {
 	commonDomain = os.Getenv(EnvVarCommonDomain)
 	if commonDomain == "" {
 		panic(fmt.Sprintf("env var '%s' must not be empty", EnvVarCommonDomain))
+	}
+
+	ignitionAdditionPath = os.Getenv(EnvVarIgnitionAdditionPath)
+	if ignitionAdditionPath == "" {
+		ignitionAdditionPath = "/tmp"
 	}
 
 	vaultToken = os.Getenv(EnvVarVaultToken)
@@ -29,6 +36,10 @@ func init() {
 
 func CommonDomain() string {
 	return commonDomain
+}
+
+func IgnitionAdditionPath() string {
+	return ignitionAdditionPath
 }
 
 func VaultToken() string {
