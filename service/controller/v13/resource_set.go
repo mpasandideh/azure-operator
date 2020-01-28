@@ -48,7 +48,8 @@ type ResourceSetConfig struct {
 
 	Azure                    setting.Azure
 	HostAzureClientSetConfig client.AzureClientSetConfig
-	IgnitionPath             string
+	IgnitionAdditionPaths    []string
+	IgnitionBasePath         string
 	InstallationName         string
 	ProjectName              string
 	OIDC                     setting.OIDC
@@ -428,12 +429,13 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 				Logger:             config.Logger,
 				RandomkeysSearcher: randomkeysSearcher,
 
-				Azure:        config.Azure,
-				AzureConfig:  *guestAzureClientSetConfig,
-				AzureNetwork: *subnets,
-				IgnitionPath: config.IgnitionPath,
-				OIDC:         config.OIDC,
-				SSOPublicKey: config.SSOPublicKey,
+				Azure:                 config.Azure,
+				AzureConfig:           *guestAzureClientSetConfig,
+				AzureNetwork:          *subnets,
+				IgnitionAdditionPaths: config.IgnitionAdditionPaths,
+				IgnitionBasePath:      config.IgnitionBasePath,
+				OIDC:                  config.OIDC,
+				SSOPublicKey:          config.SSOPublicKey,
 			}
 
 			cloudConfig, err = cloudconfig.New(c)

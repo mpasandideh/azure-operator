@@ -154,14 +154,15 @@ func New(config Config) (*Service, error) {
 			K8sClient: k8sClient,
 			Logger:    config.Logger,
 
-			Azure:            azure,
-			AzureConfig:      azureConfig,
-			IgnitionPath:     config.Viper.GetString(config.Flag.Service.Tenant.Ignition.Path),
-			OIDC:             OIDC,
-			InstallationName: config.Viper.GetString(config.Flag.Service.Installation.Name),
-			ProjectName:      config.ProjectName,
-			SSOPublicKey:     config.Viper.GetString(config.Flag.Service.Tenant.SSH.SSOPublicKey),
-			TemplateVersion:  config.Viper.GetString(config.Flag.Service.Azure.Template.URI.Version),
+			Azure:                 azure,
+			AzureConfig:           azureConfig,
+			IgnitionAdditionPaths: config.Viper.GetStringSlice(config.Flag.Service.Tenant.Ignition.AdditionPath),
+			IgnitionBasePath:      config.Viper.GetString(config.Flag.Service.Tenant.Ignition.BasePath),
+			OIDC:                  OIDC,
+			InstallationName:      config.Viper.GetString(config.Flag.Service.Installation.Name),
+			ProjectName:           config.ProjectName,
+			SSOPublicKey:          config.Viper.GetString(config.Flag.Service.Tenant.SSH.SSOPublicKey),
+			TemplateVersion:       config.Viper.GetString(config.Flag.Service.Azure.Template.URI.Version),
 		}
 
 		clusterController, err = controller.NewCluster(c)

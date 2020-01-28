@@ -5,7 +5,7 @@ import (
 
 	providerv1alpha1 "github.com/giantswarm/apiextensions/pkg/apis/provider/v1alpha1"
 	"github.com/giantswarm/certs"
-	k8scloudconfig "github.com/giantswarm/k8scloudconfig/v_5_0_0"
+	k8scloudconfig "github.com/giantswarm/k8scloudconfig/v_5_1_0"
 	"github.com/giantswarm/microerror"
 
 	"github.com/giantswarm/azure-operator/service/controller/v13/encrypter"
@@ -55,11 +55,23 @@ func (c CloudConfig) NewWorkerCloudConfig(customObject providerv1alpha1.AzureCon
 		}
 		params.SSOPublicKey = c.ssoPublicKey
 
-		ignitionPath := k8scloudconfig.GetIgnitionPath(c.ignitionPath)
-		params.Files, err = k8scloudconfig.RenderFiles(ignitionPath, params)
+		ignitionBasePath := k8scloudconfig.GetIgnitionPath(c.ignitionBasePath)
+		params.Files, err = k8scloudconfig.RenderFiles(ignitionBasePath, params)
 		if err != nil {
 			return "", microerror.Mask(err)
 		}
+
+		var ignitionAdditions []string
+		{
+			for _, p := range c.ignitionAdditionPaths {
+				additions, err := k8scloudconfig.GetIgnitionAdditions(p)
+				if err != nil {
+					return "", microerror.Mask(err)
+				}
+				ignitionAdditions = append(ignitionAdditions, additions...)
+			}
+		}
+		params.Additions = ignitionAdditions
 	}
 
 	return newCloudConfig(k8scloudconfig.WorkerTemplate, params)

@@ -1,9 +1,11 @@
 package cloudconfig
 
 import (
+	"os"
+
 	providerv1alpha1 "github.com/giantswarm/apiextensions/pkg/apis/provider/v1alpha1"
 	"github.com/giantswarm/certs"
-	k8scloudconfig "github.com/giantswarm/k8scloudconfig/v_5_0_0"
+	k8scloudconfig "github.com/giantswarm/k8scloudconfig/v_5_1_0"
 	"github.com/giantswarm/microerror"
 	"github.com/giantswarm/micrologger"
 	"github.com/giantswarm/randomkeys"
@@ -30,28 +32,36 @@ type Config struct {
 
 	Azure setting.Azure
 	// TODO(pk) remove as soon as we sort calico in Azure provider.
-	AzureConfig  client.AzureClientSetConfig
-	AzureNetwork network.Subnets
-	IgnitionPath string
-	OIDC         setting.OIDC
-	SSOPublicKey string
+	AzureConfig           client.AzureClientSetConfig
+	AzureNetwork          network.Subnets
+	IgnitionAdditionPaths []string
+	IgnitionBasePath      string
+	OIDC                  setting.OIDC
+	SSOPublicKey          string
 }
 
 type CloudConfig struct {
 	logger             micrologger.Logger
 	randomkeysSearcher randomkeys.Interface
 
-	azure        setting.Azure
-	azureConfig  client.AzureClientSetConfig
-	azureNetwork network.Subnets
-	ignitionPath string
-	OIDC         setting.OIDC
-	ssoPublicKey string
+	azure                 setting.Azure
+	azureConfig           client.AzureClientSetConfig
+	azureNetwork          network.Subnets
+	ignitionAdditionPaths []string
+	ignitionBasePath      string
+	OIDC                  setting.OIDC
+	ssoPublicKey          string
 }
 
 func New(config Config) (*CloudConfig, error) {
-	if config.IgnitionPath == "" {
-		return nil, microerror.Maskf(invalidConfigError, "%T.IgnitionPath must not be empty", config)
+	for _, p := range config.IgnitionAdditionPaths {
+		_, err := os.Stat(p)
+		if err != nil {
+			return nil, microerror.Maskf(invalidConfigError, "%T.IgnitionAdditionPaths must contain existing directories: %p does not exist", p)
+		}
+	}
+	if config.IgnitionBasePath == "" {
+		return nil, microerror.Maskf(invalidConfigError, "%T.IgnitionBasePath must not be empty", config)
 	}
 	if config.Logger == nil {
 		return nil, microerror.Maskf(invalidConfigError, "%T.Logger must not be empty", config)
@@ -71,12 +81,13 @@ func New(config Config) (*CloudConfig, error) {
 		logger:             config.Logger,
 		randomkeysSearcher: config.RandomkeysSearcher,
 
-		azure:        config.Azure,
-		azureConfig:  config.AzureConfig,
-		azureNetwork: config.AzureNetwork,
-		ignitionPath: config.IgnitionPath,
-		OIDC:         config.OIDC,
-		ssoPublicKey: config.SSOPublicKey,
+		azure:                 config.Azure,
+		azureConfig:           config.AzureConfig,
+		azureNetwork:          config.AzureNetwork,
+		ignitionAdditionPaths: config.IgnitionAdditionPaths,
+		ignitionBasePath:      config.IgnitionBasePath,
+		OIDC:                  config.OIDC,
+		ssoPublicKey:          config.SSOPublicKey,
 	}
 
 	return c, nil

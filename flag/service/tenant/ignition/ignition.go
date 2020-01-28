@@ -1,5 +1,6 @@
 package ignition
 
 type Ignition struct {
-	Path string
+	AdditionPath string
+	BasePath     string
 }
