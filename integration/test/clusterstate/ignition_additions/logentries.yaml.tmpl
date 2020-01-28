@@ -20,8 +20,6 @@ systemd:
       Description=Logentries
 
       [Service]
-      Environment=LOGENTRIES_PREFIX=${LOGENTRIES_PREFIX_VAR}
-      Environment=LOGENTRIES_TOKEN=${LOGENTRIES_TOKEN_VAR}
       ExecStart=/bin/sh /opt/bin/logentries.sh ${LOGENTRIES_PREFIX} ${LOGENTRIES_TOKEN}
 
       [Install]
