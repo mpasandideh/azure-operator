@@ -75,7 +75,7 @@ jobs:
       TESTED_VERSION: "wip"
       TEST_DIR: "integration/test/clusterstate"
       IGNITION_ADDITION_PATH: "${TEST_DIR}/ignition_additions"
-      LOGENTRIES_PREFIX_VAR: "${CIRCLE_SHA1:0:5}"
+      LOGENTRIES_PREFIX_VAR: "${CIRCLE_SHA1:0:5}-wip-pr-clusterstate"
       LOGENTRIES_TOKEN_VAR: "${LOGENTRIES_TOKEN}"
     <<: *e2eTest
 
