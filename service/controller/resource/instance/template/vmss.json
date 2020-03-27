@@ -152,7 +152,7 @@
               "version":"[parameters('vmssOsImageVersion')]"
             },
             "osDisk":{
-              "caching":"ReadWrite",
+              "caching":"ReadOnly",
               "createOption":"FromImage",
               "managedDisk":{
                 "storageAccountType":"[parameters('vmssStorageAccountType')]"
