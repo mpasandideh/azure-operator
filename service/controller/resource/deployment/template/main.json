@@ -45,6 +45,9 @@
         "description":"The main CIDR block reserved for this virtual network."
       }
     },
+    "vnetGatewaySubnetName": {
+      "type":"string"
+    },
     "calicoSubnetCidr":{
       "type":"string"
     },
@@ -52,6 +55,9 @@
       "type":"string"
     },
     "workerSubnetCidr":{
+      "type":"string"
+    },
+    "vpnSubnetCidr":{
       "type":"string"
     },
     "hostClusterCidr":{
@@ -209,6 +215,12 @@
           },
           "workerSubnetCidr":{
             "value":"[parameters('workerSubnetCidr')]"
+          },
+          "vnetGatewaySubnetName":{
+            "value":"[parameters('vnetGatewaySubnetName')]"
+          },
+          "vpnSubnetCidr":{
+            "value":"[parameters('vpnSubnetCidr')]"
           },
           "masterSecurityGroupID":{
             "value":"[reference('security_groups_setup').outputs.masterSecurityGroupID.value]"

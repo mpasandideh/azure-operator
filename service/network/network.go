@@ -10,6 +10,7 @@ import (
 const (
 	masterSubnetMask = 24
 	workerSubnetMask = 24
+	vpnSubnetMask    = 24
 
 	ipv4MaskSize = 32
 )
@@ -35,6 +36,12 @@ func Compute(network net.IPNet) (subnets *Subnets, err error) {
 
 	workerCIDRMask := net.CIDRMask(workerSubnetMask, ipv4MaskSize)
 	subnets.Worker, err = ipam.Free(network, workerCIDRMask, []net.IPNet{subnets.Calico, subnets.Master})
+	if err != nil {
+		return nil, microerror.Mask(err)
+	}
+
+	vpnCIDRMask := net.CIDRMask(vpnSubnetMask, ipv4MaskSize)
+	subnets.VPN, err = ipam.Free(network, vpnCIDRMask, []net.IPNet{subnets.Calico, subnets.Master, subnets.Worker})
 	if err != nil {
 		return nil, microerror.Mask(err)
 	}

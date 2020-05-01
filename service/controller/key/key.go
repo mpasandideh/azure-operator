@@ -32,6 +32,7 @@ const (
 	prefixMaster              = "master"
 	prefixWorker              = "worker"
 	virtualNetworkSuffix      = "VirtualNetwork"
+	vpnGatewaySubnet          = "GatewaySubnet"
 
 	TemplateContentVersion = "1.0.0.0"
 
@@ -498,6 +499,11 @@ func VnetName(customObject providerv1alpha1.AzureConfig) string {
 
 func VnetCIDR(customObject providerv1alpha1.AzureConfig) string {
 	return customObject.Spec.Azure.VirtualNetwork.CIDR
+}
+
+// VNetGatewaySubnetName returns the name of the subnet for the vpn gateway.
+func VNetGatewaySubnetName() string {
+	return vpnGatewaySubnet
 }
 
 func VNetID(customObject providerv1alpha1.AzureConfig, subscriptionID string) string {

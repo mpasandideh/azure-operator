@@ -60,7 +60,7 @@ func (r *Resource) Name() string {
 	return Name
 }
 
-func (r *Resource) getCPVnetPeeringsClient(ctx context.Context) (*network.VirtualNetworkPeeringsClient, error) {
+func (r *Resource) getCPVnetPeeringsClient() (*network.VirtualNetworkPeeringsClient, error) {
 	azureClients, err := client.NewAzureClientSet(r.hostAzureClientSetConfig)
 	if err != nil {
 		return nil, microerror.Mask(err)

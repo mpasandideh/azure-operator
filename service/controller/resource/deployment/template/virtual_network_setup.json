@@ -27,6 +27,12 @@
     "workerSubnetCidr":{
       "type":"string"
     },
+    "vnetGatewaySubnetName":{
+      "type":"string"
+    },
+    "vpnSubnetCidr":{
+      "type":"string"
+    },
     "masterSecurityGroupID":{
       "type":"string"
     },
@@ -94,6 +100,12 @@
                 { "service": "Microsoft.ContainerRegistry" },
                 { "service": "Microsoft.Web" }
               ]
+            }
+          },
+          {
+            "name":"[parameters('vnetGatewaySubnetName')]",
+            "properties":{
+              "addressPrefix":"[parameters('vpnSubnetCidr')]"
             }
           }
         ]

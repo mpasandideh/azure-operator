@@ -38,7 +38,7 @@ func (r *Resource) EnsureCreated(ctx context.Context, obj interface{}) error {
 
 	peering := r.getVnetPeering(*tcVnet.ID)
 
-	cpPeeringClient, err := r.getCPVnetPeeringsClient(ctx)
+	cpPeeringClient, err := r.getCPVnetPeeringsClient()
 	if err != nil {
 		return microerror.Mask(err)
 	}
