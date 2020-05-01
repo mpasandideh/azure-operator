@@ -98,7 +98,7 @@
           }
         ]
       },
-      "resources":{
+      "resources":[
         {
           "apiVersion":"2019-11-01",
           "type":"virtualNetworkPeerings",
@@ -117,7 +117,7 @@
             }
           }
         },
-      }
+      ]
     }
   ],
   "outputs":{
