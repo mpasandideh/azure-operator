@@ -2,6 +2,9 @@
   "$schema":"https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion":"1.0.0.0",
   "parameters":{
+    "controlPlaneName":{
+      "type":"string"
+    },
     "GiantSwarmTags":{
       "type":"object",
       "defaultValue":{
@@ -44,7 +47,7 @@
     }
   },
   "variables":{
-    "CPvnetName":"[resourceId('godsmack', 'Microsoft.Network/virtualNetworks', 'godsmack')]",
+    "CPvnetName":"[resourceId(parameters('controlPlaneName'), 'Microsoft.Network/virtualNetworks', parameters('controlPlaneName'))]",
     "virtualNetworkID":"[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "masterSubnetName":"[concat(parameters('virtualNetworkName'), '-MasterSubnet')]",
     "masterSubnetID":"[concat(variables('virtualNetworkID'), '/subnets/', variables('masterSubnetName'))]",
@@ -114,7 +117,7 @@
         {
           "apiVersion":"2019-11-01",
           "type":"virtualNetworkPeerings",
-          "name":"godsmack",
+          "name":"[parameters('CPvnetName')]",
           "location":"[resourceGroup().location]",
           "dependsOn":[
             "[parameters('virtualNetworkName')]"

@@ -8,6 +8,12 @@
         "description":"Container name for the ignition."
       }
     },
+    "controlPlaneName":{
+      "type":"string",
+      "metadata":{
+        "description":"Codename of the control plane."
+      }
+    },
     "clusterID":{
       "type":"string",
       "metadata":{
@@ -201,6 +207,9 @@
           "contentVersion":"1.0.0.0"
         },
         "parameters":{
+          "controlPlaneName":{
+            "value":"[parameters('controlPlaneName')]"
+          },
           "GiantSwarmTags":{
             "value":"[parameters('GiantSwarmTags')]"
           },

@@ -239,9 +239,10 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 	var deploymentResource resource.Interface
 	{
 		c := deployment.Config{
-			Debugger:  newDebugger,
-			G8sClient: config.K8sClient.G8sClient(),
-			Logger:    config.Logger,
+			Debugger:         newDebugger,
+			G8sClient:        config.K8sClient.G8sClient(),
+			InstallationName: config.InstallationName,
+			Logger:           config.Logger,
 
 			Azure:           config.Azure,
 			TemplateVersion: config.TemplateVersion,

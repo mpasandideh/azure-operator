@@ -20,6 +20,7 @@ func (r Resource) newDeployment(ctx context.Context, customObject providerv1alph
 
 	defaultParams := map[string]interface{}{
 		"blobContainerName":       key.BlobContainerName(),
+		"controlPlaneName":        r.installationName,
 		"calicoSubnetCidr":        cc.AzureNetwork.Calico.String(),
 		"clusterID":               key.ClusterID(customObject),
 		"dnsZones":                key.DNSZones(customObject),
