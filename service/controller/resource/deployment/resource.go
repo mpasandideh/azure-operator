@@ -30,10 +30,9 @@ const (
 )
 
 type Config struct {
-	Debugger         *debugger.Debugger
-	G8sClient        versioned.Interface
-	InstallationName string
-	Logger           micrologger.Logger
+	Debugger  *debugger.Debugger
+	G8sClient versioned.Interface
+	Logger    micrologger.Logger
 
 	Azure setting.Azure
 	// TemplateVersion is the ARM template version. Currently is the name
@@ -42,10 +41,9 @@ type Config struct {
 }
 
 type Resource struct {
-	debugger         *debugger.Debugger
-	g8sClient        versioned.Interface
-	installationName string
-	logger           micrologger.Logger
+	debugger  *debugger.Debugger
+	g8sClient versioned.Interface
+	logger    micrologger.Logger
 
 	azure           setting.Azure
 	templateVersion string
@@ -57,9 +55,6 @@ func New(config Config) (*Resource, error) {
 	}
 	if config.G8sClient == nil {
 		return nil, microerror.Maskf(invalidConfigError, "%T.G8sClient must not be empty", config)
-	}
-	if config.InstallationName == "" {
-		return nil, microerror.Maskf(invalidConfigError, "%T.InstallationName must not be empty", config)
 	}
 	if config.Logger == nil {
 		return nil, microerror.Maskf(invalidConfigError, "%T.Logger must not be empty", config)
@@ -73,10 +68,9 @@ func New(config Config) (*Resource, error) {
 	}
 
 	r := &Resource{
-		debugger:         config.Debugger,
-		g8sClient:        config.G8sClient,
-		installationName: config.InstallationName,
-		logger:           config.Logger,
+		debugger:  config.Debugger,
+		g8sClient: config.G8sClient,
+		logger:    config.Logger,
 
 		azure:           config.Azure,
 		templateVersion: config.TemplateVersion,
