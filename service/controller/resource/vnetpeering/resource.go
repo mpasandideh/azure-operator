@@ -78,6 +78,15 @@ func (r *Resource) getCPVnetClient() (*network.VirtualNetworksClient, error) {
 	return azureClients.VirtualNetworkClient, nil
 }
 
+func (r *Resource) getPublicIPAddressesClient(ctx context.Context) (*network.PublicIPAddressesClient, error) {
+	cc, err := controllercontext.FromContext(ctx)
+	if err != nil {
+		return nil, microerror.Mask(err)
+	}
+
+	return cc.AzureClientSet.PublicIPAddressesClient, nil
+}
+
 func (r *Resource) getTCVnetPeeringsClient(ctx context.Context) (*network.VirtualNetworkPeeringsClient, error) {
 	cc, err := controllercontext.FromContext(ctx)
 	if err != nil {
@@ -94,4 +103,22 @@ func (r *Resource) getTCVnetClient(ctx context.Context) (*network.VirtualNetwork
 	}
 
 	return cc.AzureClientSet.VirtualNetworkClient, nil
+}
+
+func (r *Resource) getVnetGatewaysClient(ctx context.Context) (*network.VirtualNetworkGatewaysClient, error) {
+	cc, err := controllercontext.FromContext(ctx)
+	if err != nil {
+		return nil, microerror.Mask(err)
+	}
+
+	return cc.AzureClientSet.VirtualNetworkGatewaysClient, nil
+}
+
+func (r *Resource) getVnetGatewaysConnectionsClient(ctx context.Context) (*network.VirtualNetworkGatewayConnectionsClient, error) {
+	cc, err := controllercontext.FromContext(ctx)
+	if err != nil {
+		return nil, microerror.Mask(err)
+	}
+
+	return cc.AzureClientSet.VirtualNetworkGatewayConnectionsClient, nil
 }

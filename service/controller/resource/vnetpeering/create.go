@@ -2,12 +2,18 @@ package vnetpeering
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-11-01/network"
+	"github.com/giantswarm/apiextensions/pkg/apis/provider/v1alpha1"
 	"github.com/giantswarm/microerror"
 	"github.com/giantswarm/operatorkit/controller/context/reconciliationcanceledcontext"
 
 	"github.com/giantswarm/azure-operator/service/controller/key"
+)
+
+const (
+	ProvisioningStateDeleting = "Deleting"
 )
 
 // This resource applies the ARM template for the worker instances, monitors the process and handles upgrades.
@@ -81,14 +87,117 @@ func (r *Resource) EnsureCreated(ctx context.Context, obj interface{}) error {
 		return microerror.Mask(err)
 	}
 
+	// Delete VPN Gateway.
+	err = r.ensureVnetGatewayIsDeleted(ctx, cr)
+	if err != nil {
+		return microerror.Mask(err)
+	}
+
+	return nil
+}
+
+func (r *Resource) ensureVnetGatewayIsDeleted(ctx context.Context, cr v1alpha1.AzureConfig) error {
+	gc, err := r.getVnetGatewaysClient(ctx)
+	if err != nil {
+		return microerror.Mask(err)
+	}
+
+	r.logger.LogCtx(ctx, "level", "debug", "message", "Checking if the VPN gateway still exists")
+
+	gw, err := gc.Get(ctx, key.ResourceGroupName(cr), key.VPNGatewayName(cr))
+	if IsNotFound(err) {
+		// VPN gateway not found. That's our goal, all good.
+		// Let's check if the public IP address still exist and delete that as well.
+		r.logger.LogCtx(ctx, "level", "debug", "message", "VPN gateway does not exists")
+
+		ipsClient, err := r.getPublicIPAddressesClient(ctx)
+		if err != nil {
+			return microerror.Mask(err)
+		}
+
+		r.logger.LogCtx(ctx, "level", "debug", "message", "Checking if the VPN gateway's public IP still exists")
+
+		_, err = ipsClient.Get(ctx, key.ResourceGroupName(cr), key.VPNGatewayPublicIPName(cr), "")
+		if IsNotFound(err) {
+			// That's the desired state, all good.
+			r.logger.LogCtx(ctx, "level", "debug", "message", "VPN gateway's public IP does not exists")
+			return nil
+		}
+
+		r.logger.LogCtx(ctx, "level", "debug", "message", "VPN gateway's public IP still exists, requesting deletion")
+
+		_, err = ipsClient.Delete(ctx, key.ResourceGroupName(cr), key.VPNGatewayPublicIPName(cr))
+		if err != nil {
+			return microerror.Mask(err)
+		}
+
+		r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("Requested deletion of public IP %s", key.VPNGatewayPublicIPName(cr)))
+
+		return nil
+	} else if err != nil {
+		return microerror.Mask(err)
+	}
+
+	r.logger.LogCtx(ctx, "level", "debug", "message", "VPN Gateway still exists")
+
+	if gw.ProvisioningState == ProvisioningStateDeleting {
+		r.logger.LogCtx(ctx, "level", "debug", "message", "VPN Gateway deletion in progress")
+		return nil
+	}
+
+	r.logger.LogCtx(ctx, "level", "debug", "message", "Checking if there are existing connections")
+
+	cc, err := r.getVnetGatewaysConnectionsClient(ctx)
+	if err != nil {
+		return microerror.Mask(err)
+	}
+
+	results, err := cc.ListComplete(ctx, key.ResourceGroupName(cr))
+	if err != nil {
+		return microerror.Mask(err)
+	}
+
+	found := false
+	for results.NotDone() {
+		c := results.Value()
+
+		if *c.VirtualNetworkGateway1.ID == *gw.ID || *c.VirtualNetworkGateway2.ID == *gw.ID {
+			r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("Found VPN connection %s to be deleted", *c.Name))
+
+			_, err := cc.Delete(ctx, key.ResourceGroupName(cr), *c.Name)
+			if err != nil {
+				return microerror.Mask(err)
+			}
+
+			found = true
+		}
+
+		err = results.Next()
+		if err != nil {
+			return microerror.Mask(err)
+		}
+	}
+
+	if !found {
+		// No connections have been found, safe to delete the VPN Gateway.
+		r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("No connections found, deleting VPN Gateway %s", *gw.Name))
+
+		_, err := gc.Delete(ctx, key.ResourceGroupName(cr), *gw.Name)
+		if err != nil {
+			return microerror.Mask(err)
+		}
+		return nil
+	}
+
 	return nil
 }
 
 func (r *Resource) getCPVnetPeering(vnetId string) network.VirtualNetworkPeering {
+	t := true
 	f := false
 	peering := network.VirtualNetworkPeering{
 		VirtualNetworkPeeringPropertiesFormat: &network.VirtualNetworkPeeringPropertiesFormat{
-			AllowVirtualNetworkAccess: &f,
+			AllowVirtualNetworkAccess: &t,
 			AllowForwardedTraffic:     &f,
 			AllowGatewayTransit:       &f,
 			UseRemoteGateways:         &f,

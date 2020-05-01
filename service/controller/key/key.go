@@ -33,6 +33,7 @@ const (
 	prefixWorker              = "worker"
 	virtualNetworkSuffix      = "VirtualNetwork"
 	vpnGatewaySubnet          = "GatewaySubnet"
+	vpnGatewaySuffix          = "VPNGateway"
 
 	TemplateContentVersion = "1.0.0.0"
 
@@ -508,6 +509,15 @@ func VNetGatewaySubnetName() string {
 
 func VNetID(customObject providerv1alpha1.AzureConfig, subscriptionID string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s", subscriptionID, ResourceGroupName(customObject), VnetName(customObject))
+}
+
+// VPNGatewayName returns name of the vpn gateway.
+func VPNGatewayName(customObject providerv1alpha1.AzureConfig) string {
+	return fmt.Sprintf("%s-%s", ClusterID(customObject), vpnGatewaySuffix)
+}
+
+func VPNGatewayPublicIPName(customObject providerv1alpha1.AzureConfig) string {
+	return fmt.Sprintf("%s-VPNGateway-PublicIP", ClusterID(customObject))
 }
 
 func LegacyWorkerInstanceName(customObject providerv1alpha1.AzureConfig, instanceID string) string {
