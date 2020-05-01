@@ -10,7 +10,6 @@ type Subnets struct {
 	Parent net.IPNet
 	Calico net.IPNet
 	Master net.IPNet
-	VPN    net.IPNet
 	Worker net.IPNet
 }
 
@@ -33,8 +32,6 @@ func (a Subnets) Equal(b Subnets) bool {
 		bytes.Equal(a.Master.Mask, b.Master.Mask) &&
 		a.Parent.IP.Equal(b.Parent.IP) &&
 		bytes.Equal(a.Parent.Mask, b.Parent.Mask) &&
-		a.VPN.IP.Equal(b.VPN.IP) &&
-		bytes.Equal(a.VPN.Mask, b.VPN.Mask) &&
 		a.Worker.IP.Equal(b.Worker.IP) &&
 		bytes.Equal(a.Worker.Mask, b.Worker.Mask)
 }

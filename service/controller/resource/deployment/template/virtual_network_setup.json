@@ -27,12 +27,6 @@
     "workerSubnetCidr":{
       "type":"string"
     },
-    "vnetGatewaySubnetName":{
-      "type":"string"
-    },
-    "vpnSubnetCidr":{
-      "type":"string"
-    },
     "masterSecurityGroupID":{
       "type":"string"
     },
@@ -44,6 +38,7 @@
     }
   },
   "variables":{
+    "CPvnetName":"[resourceId('godsmack', 'Microsoft.Network/virtualNetworks', 'godsmack')]",
     "virtualNetworkID":"[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "masterSubnetName":"[concat(parameters('virtualNetworkName'), '-MasterSubnet')]",
     "masterSubnetID":"[concat(variables('virtualNetworkID'), '/subnets/', variables('masterSubnetName'))]",
@@ -100,14 +95,28 @@
                 { "service": "Microsoft.Web" }
               ]
             }
-          },
-          {
-            "name":"[parameters('vnetGatewaySubnetName')]",
-            "properties":{
-              "addressPrefix":"[parameters('vpnSubnetCidr')]"
-            }
           }
         ]
+      },
+      "resources":{
+        {
+          "apiVersion":"2019-11-01",
+          "type":"virtualNetworkPeerings",
+          "name":"godsmack",
+          "location":"[resourceGroup().location]",
+          "dependsOn":[
+            "[parameters('virtualNetworkName')]"
+          ],
+          "properties": {
+            "allowVirtualNetworkAccess": "true",
+            "allowForwardedTraffic": "false",
+            "allowGatewayTransit": "false",
+            "useRemoteGateways": "false",
+            "remoteVirtualNetwork": {
+              "id": "[variables('CPvnetName')]"
+            }
+          }
+        },
       }
     }
   ],

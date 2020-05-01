@@ -32,8 +32,6 @@ const (
 	prefixMaster              = "master"
 	prefixWorker              = "worker"
 	virtualNetworkSuffix      = "VirtualNetwork"
-	vpnGatewaySubnet          = "GatewaySubnet"
-	vpnGatewaySuffix          = "VPNGateway"
 
 	TemplateContentVersion = "1.0.0.0"
 
@@ -502,18 +500,8 @@ func VnetCIDR(customObject providerv1alpha1.AzureConfig) string {
 	return customObject.Spec.Azure.VirtualNetwork.CIDR
 }
 
-// VNetGatewaySubnetName returns the name of the subnet for the vpn gateway.
-func VNetGatewaySubnetName() string {
-	return vpnGatewaySubnet
-}
-
 func VNetID(customObject providerv1alpha1.AzureConfig, subscriptionID string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s", subscriptionID, ResourceGroupName(customObject), VnetName(customObject))
-}
-
-// VPNGatewayName returns name of the vpn gateway.
-func VPNGatewayName(customObject providerv1alpha1.AzureConfig) string {
-	return fmt.Sprintf("%s-%s", ClusterID(customObject), vpnGatewaySuffix)
 }
 
 func LegacyWorkerInstanceName(customObject providerv1alpha1.AzureConfig, instanceID string) string {

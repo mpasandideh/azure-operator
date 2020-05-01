@@ -39,8 +39,6 @@ import (
 	"github.com/giantswarm/azure-operator/service/controller/resource/resourcegroup"
 	"github.com/giantswarm/azure-operator/service/controller/resource/service"
 	"github.com/giantswarm/azure-operator/service/controller/resource/tenantclients"
-	"github.com/giantswarm/azure-operator/service/controller/resource/vpn"
-	"github.com/giantswarm/azure-operator/service/controller/resource/vpnconnection"
 	"github.com/giantswarm/azure-operator/service/controller/setting"
 	"github.com/giantswarm/azure-operator/service/credential"
 	"github.com/giantswarm/azure-operator/service/network"
@@ -379,42 +377,6 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 		}
 	}
 
-	var vpnResource resource.Interface
-	{
-		c := vpn.Config{
-			Debugger: newDebugger,
-			Logger:   config.Logger,
-
-			Azure:           config.Azure,
-			TemplateVersion: config.TemplateVersion,
-		}
-
-		vpnResource, err = vpn.New(c)
-		if err != nil {
-			return nil, microerror.Mask(err)
-		}
-	}
-
-	var vpnconnectionResource resource.Interface
-	{
-		c := vpnconnection.Config{
-			Logger: config.Logger,
-
-			Azure:                    config.Azure,
-			HostAzureClientSetConfig: config.HostAzureClientSetConfig,
-		}
-
-		ops, err := vpnconnection.New(c)
-		if err != nil {
-			return nil, microerror.Mask(err)
-		}
-
-		vpnconnectionResource, err = toCRUDResource(config.Logger, ops)
-		if err != nil {
-			return nil, microerror.Mask(err)
-		}
-	}
-
 	resources := []resource.Interface{
 		statusResource,
 		releaseResource,
@@ -430,8 +392,6 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 		mastersResource,
 		instanceResource,
 		endpointsResource,
-		vpnResource,
-		vpnconnectionResource,
 	}
 
 	{

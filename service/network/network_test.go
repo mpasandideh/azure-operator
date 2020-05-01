@@ -22,7 +22,6 @@ func TestComputeSubnets(t *testing.T) {
 				Calico: net.IPNet{IP: net.IPv4(10, 0, 128, 0), Mask: net.IPv4Mask(255, 255, 128, 0)},
 				Master: net.IPNet{IP: net.IPv4(10, 0, 0, 0), Mask: net.IPv4Mask(255, 255, 255, 0)},
 				Parent: net.IPNet{IP: net.IPv4(10, 0, 0, 0), Mask: net.IPv4Mask(255, 255, 0, 0)},
-				VPN:    net.IPNet{IP: net.IPv4(10, 0, 2, 0), Mask: net.IPv4Mask(255, 255, 255, 0)},
 				Worker: net.IPNet{IP: net.IPv4(10, 0, 1, 0), Mask: net.IPv4Mask(255, 255, 255, 0)},
 			},
 			nil,
@@ -52,7 +51,7 @@ func TestComputeSubnets(t *testing.T) {
 				}
 
 				printSubnets := func(s Subnets) string {
-					return fmt.Sprintf("Calico: %s\nMaster: %s\nParent: %s\nVPN: %s\nWorker: %s\n", s.Calico, s.Master, s.Parent, s.VPN, s.Worker)
+					return fmt.Sprintf("Calico: %s\nMaster: %s\nParent: %s\nWorker: %s\n", s.Calico, s.Master, s.Parent, s.Worker)
 				}
 
 				printSubnets(*subnets)
