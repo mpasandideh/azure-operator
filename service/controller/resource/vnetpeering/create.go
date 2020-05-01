@@ -17,16 +17,16 @@ func (r *Resource) EnsureCreated(ctx context.Context, obj interface{}) error {
 		return microerror.Mask(err)
 	}
 
-	// Check if vnet exists.
-	r.logger.LogCtx(ctx, "level", "debug", "message", "Checking if virtual network exists")
-	tcVnetClient, err := r.getVnetClient(ctx)
+	// Check if TC vnet exists.
+	r.logger.LogCtx(ctx, "level", "debug", "message", "Checking if TC virtual network exists")
+	tcVnetClient, err := r.getTCVnetClient(ctx)
 	if err != nil {
 		return microerror.Mask(err)
 	}
 
 	tcVnet, err := tcVnetClient.Get(ctx, key.ResourceGroupName(cr), key.VnetName(cr), "")
 	if IsNotFound(err) {
-		r.logger.LogCtx(ctx, "level", "debug", "message", "Virtual network does not exist")
+		r.logger.LogCtx(ctx, "level", "debug", "message", "TC Virtual network does not exist")
 		reconciliationcanceledcontext.SetCanceled(ctx)
 		r.logger.LogCtx(ctx, "level", "debug", "message", "canceling reconciliation")
 		return nil
@@ -34,17 +34,49 @@ func (r *Resource) EnsureCreated(ctx context.Context, obj interface{}) error {
 		return microerror.Mask(err)
 	}
 
-	r.logger.LogCtx(ctx, "level", "debug", "message", "Virtual network exists")
+	r.logger.LogCtx(ctx, "level", "debug", "message", "TC Virtual network exists")
 
-	peering := r.getVnetPeering(*tcVnet.ID)
+	// Check if CP vnet exists.
+	r.logger.LogCtx(ctx, "level", "debug", "message", "Checking if CP virtual network exists")
+	cpVnetClient, err := r.getCPVnetClient()
+	if err != nil {
+		return microerror.Mask(err)
+	}
 
+	cpVnet, err := cpVnetClient.Get(ctx, r.installationName, r.installationName, "")
+	if IsNotFound(err) {
+		r.logger.LogCtx(ctx, "level", "debug", "message", "CP Virtual network does not exist")
+		reconciliationcanceledcontext.SetCanceled(ctx)
+		r.logger.LogCtx(ctx, "level", "debug", "message", "canceling reconciliation")
+		return nil
+	} else if err != nil {
+		return microerror.Mask(err)
+	}
+
+	r.logger.LogCtx(ctx, "level", "debug", "message", "CP Virtual network exists")
+
+	// Create vnet peering on the tenant cluster side.
+	tcPeering := r.getTCVnetPeering(*cpVnet.ID)
+	tcPeeringClient, err := r.getTCVnetPeeringsClient(ctx)
+	if err != nil {
+		return microerror.Mask(err)
+	}
+
+	r.logger.LogCtx(ctx, "level", "debug", "message", "Ensuring vnet peering exists on the tenant cluster vnet")
+	_, err = tcPeeringClient.CreateOrUpdate(ctx, key.ResourceGroupName(cr), key.VnetName(cr), r.installationName, tcPeering)
+	if err != nil {
+		return microerror.Mask(err)
+	}
+
+	// Create vnet peering on the control plane side.
+	cpPeering := r.getCPVnetPeering(*tcVnet.ID)
 	cpPeeringClient, err := r.getCPVnetPeeringsClient()
 	if err != nil {
 		return microerror.Mask(err)
 	}
 
 	r.logger.LogCtx(ctx, "level", "debug", "message", "Ensuring vnet peering exists on the control plane vnet")
-	_, err = cpPeeringClient.CreateOrUpdate(ctx, r.installationName, r.installationName, key.ResourceGroupName(cr), peering)
+	_, err = cpPeeringClient.CreateOrUpdate(ctx, r.installationName, r.installationName, key.ResourceGroupName(cr), cpPeering)
 	if err != nil {
 		return microerror.Mask(err)
 	}
@@ -52,7 +84,24 @@ func (r *Resource) EnsureCreated(ctx context.Context, obj interface{}) error {
 	return nil
 }
 
-func (r *Resource) getVnetPeering(vnetId string) network.VirtualNetworkPeering {
+func (r *Resource) getCPVnetPeering(vnetId string) network.VirtualNetworkPeering {
+	f := false
+	peering := network.VirtualNetworkPeering{
+		VirtualNetworkPeeringPropertiesFormat: &network.VirtualNetworkPeeringPropertiesFormat{
+			AllowVirtualNetworkAccess: &f,
+			AllowForwardedTraffic:     &f,
+			AllowGatewayTransit:       &f,
+			UseRemoteGateways:         &f,
+			RemoteVirtualNetwork: &network.SubResource{
+				ID: &vnetId,
+			},
+		},
+	}
+
+	return peering
+}
+
+func (r *Resource) getTCVnetPeering(vnetId string) network.VirtualNetworkPeering {
 	t := true
 	f := false
 	peering := network.VirtualNetworkPeering{

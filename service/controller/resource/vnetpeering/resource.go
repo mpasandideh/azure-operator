@@ -69,7 +69,25 @@ func (r *Resource) getCPVnetPeeringsClient() (*network.VirtualNetworkPeeringsCli
 	return azureClients.VnetPeeringClient, nil
 }
 
-func (r *Resource) getVnetClient(ctx context.Context) (*network.VirtualNetworksClient, error) {
+func (r *Resource) getCPVnetClient() (*network.VirtualNetworksClient, error) {
+	azureClients, err := client.NewAzureClientSet(r.hostAzureClientSetConfig)
+	if err != nil {
+		return nil, microerror.Mask(err)
+	}
+
+	return azureClients.VirtualNetworkClient, nil
+}
+
+func (r *Resource) getTCVnetPeeringsClient(ctx context.Context) (*network.VirtualNetworkPeeringsClient, error) {
+	cc, err := controllercontext.FromContext(ctx)
+	if err != nil {
+		return nil, microerror.Mask(err)
+	}
+
+	return cc.AzureClientSet.VnetPeeringClient, nil
+}
+
+func (r *Resource) getTCVnetClient(ctx context.Context) (*network.VirtualNetworksClient, error) {
 	cc, err := controllercontext.FromContext(ctx)
 	if err != nil {
 		return nil, microerror.Mask(err)
