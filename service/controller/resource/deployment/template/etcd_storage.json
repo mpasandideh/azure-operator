@@ -90,7 +90,7 @@
       "resources": [
         {
           "name": "[variables('shareName')]",
-          "type": "shares",
+          "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
           "apiVersion": "[parameters('fileServicesAPIVersion')]",
           "properties": {
             "shareQuota": "[parameters('fileShareSizeGB')]"
