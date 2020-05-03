@@ -69,7 +69,9 @@
         "supportsHttpsTrafficOnly": "[parameters('supportsHttpsTrafficOnly')]",
         "largeFileSharesState": "[parameters('largeFileSharesState')]"
       },
-      "dependsOn": [],
+      "dependsOn": [
+        "[variables('storageAccountName')]"
+      ],
       "sku": {
         "name": "[parameters('accountType')]"
       },
@@ -94,7 +96,10 @@
           "apiVersion": "[parameters('fileServicesAPIVersion')]",
           "properties": {
             "shareQuota": "[parameters('fileShareSizeGB')]"
-          }
+          },
+          "dependsOn":[
+            "[variables('fileServiceName')]"
+          ]
         }
       ]
     }
