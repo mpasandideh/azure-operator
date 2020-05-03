@@ -74,6 +74,10 @@
       "type":"string",
       "defaultValue":"dns_cname_setup.json"
     },
+    "etcdStorageTemplateFile":{
+      "type":"string",
+      "defaultValue":"etcd_storage.json"
+    },
     "containerSetupTemplateFile":{
       "type":"string",
       "defaultValue":"container_setup.json"
@@ -112,6 +116,7 @@
   "variables":{
     "dnsASetupTemplateURI":"[uri(deployment().properties.templateLink.uri, parameters('dnsASetupTemplateFile'))]",
     "dnsCNAMESetupTemplateURI":"[uri(deployment().properties.templateLink.uri, parameters('dnsCNAMESetupTemplateFile'))]",
+    "etcdStorageTemplateURI":"[uri(deployment().properties.templateLink.uri, parameters('etcdStorageTemplateFile'))]",
     "containerSetupTemplateURI":"[uri(deployment().properties.templateLink.uri, parameters('containerSetupTemplateFile'))]",
     "kubernetesLoadBalancerTemplateURI":"[uri(deployment().properties.templateLink.uri, parameters('kubernetesLoadBalancerTemplateFile'))]",
     "publicLoadBalancerTemplateURI":"[uri(deployment().properties.templateLink.uri, parameters('publicLoadBalancerTemplateFile'))]",
