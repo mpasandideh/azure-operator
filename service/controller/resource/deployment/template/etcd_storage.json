@@ -55,7 +55,6 @@
   },
   "variables": {
     "storageAccountName":"[concat(parameters('clusterID'), 'etcd')]",
-    "fileServiceName":"etcd",
     "shareName":"etcd"
   },
   "resources": [
@@ -80,21 +79,7 @@
       }
     },
     {
-      "name": "[concat(variables('storageAccountName'), '/', variables('fileServiceName'))]",
-      "type": "Microsoft.Storage/storageAccounts/fileServices",
-      "apiVersion": "[parameters('fileServicesAPIVersion')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-      ],
-      "properties": {
-        "shareDeleteRetentionPolicy": {
-          "enabled": "false"
-        }
-      },
-      "resources": []
-    },
-    {
-      "name": "[concat(variables('storageAccountName'), '/', variables('fileServiceName'), '/', variables('shareName'))]",
+      "name": "[concat(variables('storageAccountName'), '/default/', variables('shareName'))]",
       "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
       "apiVersion": "[parameters('fileServicesAPIVersion')]",
       "properties": {
@@ -102,7 +87,6 @@
       },
       "dependsOn":[
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageAccountName'), variables('fileServiceName'))]"
       ]
     }
   ]
