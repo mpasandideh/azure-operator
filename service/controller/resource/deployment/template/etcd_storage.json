@@ -84,7 +84,7 @@
       "type": "Microsoft.Storage/storageAccounts/fileServices",
       "apiVersion": "[parameters('fileServicesAPIVersion')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', 'variables('storageAccountName')')]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
       "properties": {
         "shareDeleteRetentionPolicy": {
