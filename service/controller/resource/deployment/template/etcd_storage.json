@@ -39,7 +39,7 @@
     },
     "kind": {
       "type": "string",
-      "defaultValue":"StorageV2"
+      "defaultValue":"FileStorage"
     },
     "storageAccountsAPIVersion":{
       "type":"string",
@@ -91,29 +91,19 @@
           "enabled": "false"
         }
       },
-      "resources": [
-        {
-          "name": "[concat(variables('storageAccountName'), '/', variables('fileServiceName'), '/', variables('shareName'))]",
-          "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
-          "apiVersion": "[parameters('fileServicesAPIVersion')]",
-          "properties": {
-            "shareQuota": "[parameters('fileShareSizeGB')]"
-          },
-          "dependsOn":[
-            "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageAccountName'), variables('fileServiceName'))]"
-          ]
-        }
+      "resources": []
+    },
+    {
+      "name": "[concat(variables('storageAccountName'), '/', variables('fileServiceName'), '/', variables('shareName'))]",
+      "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+      "apiVersion": "[parameters('fileServicesAPIVersion')]",
+      "properties": {
+        "shareQuota": "[parameters('fileShareSizeGB')]"
+      },
+      "dependsOn":[
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageAccountName'), variables('fileServiceName'))]"
       ]
     }
-  ],
-  "outputs": {
-    "storageAccountName":{
-      "type":"string",
-      "value":"[variables('storageAccountName')]"
-    },
-    "fileServiceName":{
-      "type":"string",
-      "value":"[variables('fileServiceName')]"
-    }
-  }
+  ]
 }
