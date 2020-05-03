@@ -11,13 +11,14 @@ import (
 )
 
 type baseExtension struct {
-	azure        setting.Azure
-	azureConfig  client.AzureClientSetConfig
-	calicoCIDR   string
-	clusterCerts certs.Cluster
-	customObject providerv1alpha1.AzureConfig
-	encrypter    encrypter.Interface
-	vnetCIDR     string
+	azure             setting.Azure
+	azureConfig       client.AzureClientSetConfig
+	calicoCIDR        string
+	clusterCerts      certs.Cluster
+	customObject      providerv1alpha1.AzureConfig
+	encrypter         encrypter.Interface
+	etcdStorageSecret string
+	vnetCIDR          string
 }
 
 func (e *baseExtension) templateData(certFiles certs.Files) templateData {

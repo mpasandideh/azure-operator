@@ -24,6 +24,8 @@ type Context struct {
 	CloudConfig         cloudconfig.Interface
 	ContainerURL        *azblob.ContainerURL
 	EtcdLBBackendPoolID string
+	ETCDFileShareURL    string
+	ETCDFileShareSecret string
 	MasterSubnetID      string
 	Release             ContextRelease
 	WorkerSubnetID      string

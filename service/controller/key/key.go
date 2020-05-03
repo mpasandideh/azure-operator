@@ -21,6 +21,7 @@ const (
 	WorkersVmssDeploymentName = "workers-vmss-template"
 
 	blobContainerName = "ignition"
+	etcdFileShareName = "etcd"
 	// cloudConfigVersion is used in blob object ignition name
 	cloudConfigVersion        = "v6.0.0"
 	storageAccountSuffix      = "gssa"
@@ -247,6 +248,20 @@ func DNSZoneResourceGroupIngress(customObject providerv1alpha1.AzureConfig) stri
 
 func DNSZones(customObject providerv1alpha1.AzureConfig) providerv1alpha1.AzureConfigSpecAzureDNSZones {
 	return customObject.Spec.Azure.DNSZones
+}
+
+func ETCDFileShareName() string {
+	return etcdFileShareName
+}
+
+func ETCDStorageAccountName(customObject providerv1alpha1.AzureConfig) string {
+	// In integration tests we use hyphens which are not allowed. We also
+	// need to keep the name globaly unique and within 24 character limit.
+	//
+	//	See https://docs.microsoft.com/en-us/azure/architecture/best-practices/naming-conventions#storage
+	//
+	storageAccountName := fmt.Sprintf("%s%s", ClusterID(customObject), "etcd")
+	return strings.Replace(storageAccountName, "-", "", -1)
 }
 
 func IsDeleted(customObject providerv1alpha1.AzureConfig) bool {

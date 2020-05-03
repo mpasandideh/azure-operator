@@ -49,13 +49,14 @@ func (c CloudConfig) NewMasterTemplate(ctx context.Context, data IgnitionTemplat
 	var params k8scloudconfig.Params
 	{
 		be := baseExtension{
-			azure:        c.azure,
-			azureConfig:  c.azureConfig,
-			calicoCIDR:   c.azureNetwork.Calico.String(),
-			clusterCerts: data.ClusterCerts,
-			customObject: data.CustomObject,
-			encrypter:    encrypter,
-			vnetCIDR:     data.CustomObject.Spec.Azure.VirtualNetwork.CIDR,
+			azure:             c.azure,
+			azureConfig:       c.azureConfig,
+			calicoCIDR:        c.azureNetwork.Calico.String(),
+			clusterCerts:      data.ClusterCerts,
+			customObject:      data.CustomObject,
+			encrypter:         encrypter,
+			etcdStorageSecret: data.ETCDStorageSecret,
+			vnetCIDR:          data.CustomObject.Spec.Azure.VirtualNetwork.CIDR,
 		}
 
 		params = k8scloudconfig.DefaultParams()
@@ -194,7 +195,7 @@ func (me *masterExtension) Files() ([]k8scloudconfig.FileAsset, error) {
 			Permissions: FilePermission,
 		},
 		{
-			AssetContent: fmt.Sprintf("username=%setcd\npassword=%s\n", me.customObject.Name, "qmSCaKuVetCEzNKSZUx76D6w6QuyOWqncx9M2E0Kvqeec5bqXNwervHgXa90mGFlnNtOyY/hJsmJG4kDhQf49A=="),
+			AssetContent: fmt.Sprintf("username=%setcd\npassword=%s\n", me.customObject.Name, me.etcdStorageSecret),
 			Path:         fmt.Sprintf("/etc/smbcredentials/%setcd.cred", me.customObject.Name),
 			Owner: k8scloudconfig.Owner{
 				Group: k8scloudconfig.Group{

@@ -61,9 +61,10 @@ func (r *Resource) GetDesiredState(ctx context.Context, obj interface{}) (interf
 		images := v_6_0_0.BuildImages(r.registryDomain, versions)
 
 		ignitionTemplateData = cloudconfig.IgnitionTemplateData{
-			CustomObject: cr,
-			ClusterCerts: clusterCerts,
-			Images:       images,
+			CustomObject:      cr,
+			ClusterCerts:      clusterCerts,
+			ETCDStorageSecret: cc.ETCDFileShareSecret,
+			Images:            images,
 		}
 	}
 

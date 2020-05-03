@@ -32,6 +32,7 @@ import (
 	"github.com/giantswarm/azure-operator/service/controller/resource/dnsrecord"
 	"github.com/giantswarm/azure-operator/service/controller/resource/encryptionkey"
 	"github.com/giantswarm/azure-operator/service/controller/resource/endpoints"
+	"github.com/giantswarm/azure-operator/service/controller/resource/etcdstoragesecret"
 	"github.com/giantswarm/azure-operator/service/controller/resource/instance"
 	"github.com/giantswarm/azure-operator/service/controller/resource/masters"
 	"github.com/giantswarm/azure-operator/service/controller/resource/namespace"
@@ -305,6 +306,18 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 		}
 	}
 
+	var etcdStorageSecret resource.Interface
+	{
+		c := etcdstoragesecret.Config{
+			Logger: config.Logger,
+		}
+
+		etcdStorageSecret, err = etcdstoragesecret.New(c)
+		if err != nil {
+			return nil, microerror.Mask(err)
+		}
+	}
+
 	var iwd vmsscheck.InstanceWatchdog
 	{
 		c := vmsscheck.Config{
@@ -401,6 +414,7 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 		serviceResource,
 		resourceGroupResource,
 		containerURLResource,
+		etcdStorageSecret,
 		encryptionkeyResource,
 		blobObjectResource,
 		deploymentResource,
