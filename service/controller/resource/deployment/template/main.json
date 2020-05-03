@@ -429,6 +429,26 @@
           }
         }
       }
+    },
+    {
+      "apiVersion":"2016-09-01",
+      "name":"etcd_storage_account",
+      "type":"Microsoft.Resources/deployments",
+      "properties":{
+        "mode":"incremental",
+        "templateLink":{
+          "uri":"[variables('etcdStorageTemplateURI')]",
+          "contentVersion":"1.0.0.0"
+        },
+        "parameters":{
+          "clusterID":{
+            "value":"[parameters('clusterID')]"
+          },
+          "GiantSwarmTags":{
+            "value":"[parameters('GiantSwarmTags')]"
+          }
+        }
+      }
     }
   ]
 }

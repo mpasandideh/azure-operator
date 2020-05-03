@@ -1,0 +1,105 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "accessTier": {
+      "type": "string",
+      "defaultValue":"Hot"
+    },
+    "accountType": {
+      "type": "string",
+      "defaultValue":"Standard_LRS"
+    },
+    "clusterID": {
+      "type": "string"
+    },
+    "fileServicesAPIVersion":{
+      "type":"string",
+      "defaultValue":"2019-06-01",
+      "metadata":{
+        "description":"API version used by the Microsoft.Storage/storageAccounts/fileServices resource."
+      }
+    },
+    "fileShareSizeGB":{
+      "type":"string",
+      "defaultValue":"1",
+      "metadata":{
+        "description":"The maximum size of the share, in gigabytes. Must be greater than 0, and less than or equal to 5TB (5120). For Large File Shares, the maximum size is 102400."
+      }
+    },
+    "GiantSwarmTags":{
+      "type":"object",
+      "defaultValue":{
+        "provider":"F80D01C0-7AAC-4440-98F6-5061511962AD"
+      }
+    },
+    "largeFileSharesState": {
+      "type": "string",
+      "defaultValue":"Disabled"
+    },
+    "kind": {
+      "type": "string",
+      "defaultValue":"StorageV2"
+    },
+    "storageAccountsAPIVersion":{
+      "type":"string",
+      "defaultValue":"2019-06-01",
+      "metadata":{
+        "description":"API version used by the Microsoft.Storage/storageAccounts resource."
+      }
+    },
+    "supportsHttpsTrafficOnly": {
+      "type": "bool",
+      "defaultValue":true
+    }
+  },
+  "variables": {
+    "storageAccountName":"[concat(parameters('clusterID'), 'etcd')]",
+    "fileServiceName":"etcd"
+  },
+  "resources": [
+    {
+      "name": "[variables('storageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "[parameters('storageAccountsAPIVersion')]",
+      "location":"[resourceGroup().location]",
+      "properties": {
+        "accessTier": "[parameters('accessTier')]",
+        "supportsHttpsTrafficOnly": "[parameters('supportsHttpsTrafficOnly')]",
+        "largeFileSharesState": "[parameters('largeFileSharesState')]"
+      },
+      "dependsOn": [],
+      "sku": {
+        "name": "[parameters('accountType')]"
+      },
+      "kind": "[parameters('kind')]",
+      "tags":{
+        "provider":"[toUpper(parameters('GiantSwarmTags').provider)]"
+      }
+    },
+    {
+      "name": "[variables('fileServiceName')]",
+      "type": "Microsoft.Storage/storageAccounts/fileServices",
+      "apiVersion": "[parameters('fileServicesAPIVersion')]",
+      "properties": {
+        "shareDeleteRetentionPolicy": {
+          "enabled": "false"
+        }
+      },
+      "resources": [
+        {
+          "name": "[vairables('fileServiceName')]",
+          "type": "shares",
+          "apiVersion": "[parameters('fileServicesAPIVersion')]",
+          "properties": {
+            "shareQuota": "[parameters('fileShareSizeGB')]"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "storageAccountName": "[variables('storageAccountName')]",
+    "fileServiceName": "[variables('fileServiceName')]"
+  }
+}
