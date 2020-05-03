@@ -55,8 +55,8 @@
   },
   "variables": {
     "storageAccountName":"[concat(parameters('clusterID'), 'etcd')]",
-    "fileServiceName":"[concat(variables('storageAccountName'), '/etcd')]",
-    "shareName":"[concat(variables('fileServiceName'), '/etcd')]"
+    "fileServiceName":"etcd",
+    "shareName":"etcd"
   },
   "resources": [
     {
@@ -70,7 +70,6 @@
         "largeFileSharesState": "[parameters('largeFileSharesState')]"
       },
       "dependsOn": [
-        "[variables('storageAccountName')]"
       ],
       "sku": {
         "name": "[parameters('accountType')]"
@@ -81,9 +80,12 @@
       }
     },
     {
-      "name": "[variables('fileServiceName')]",
+      "name": "[concat(variables('storageAccountName'), '/', variables('fileServiceName'))]",
       "type": "Microsoft.Storage/storageAccounts/fileServices",
       "apiVersion": "[parameters('fileServicesAPIVersion')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', 'variables('storageAccountName')')]"
+      ],
       "properties": {
         "shareDeleteRetentionPolicy": {
           "enabled": "false"
@@ -91,14 +93,14 @@
       },
       "resources": [
         {
-          "name": "[variables('shareName')]",
+          "name": "[concat(variables('storageAccountName'), '/', variables('fileServiceName'), '/', variables('shareName'))]",
           "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
           "apiVersion": "[parameters('fileServicesAPIVersion')]",
           "properties": {
             "shareQuota": "[parameters('fileShareSizeGB')]"
           },
           "dependsOn":[
-            "[variables('fileServiceName')]"
+            "[resourceId('Microsoft.Storage/storageAccounts/fileServices', 'variables('fileServiceName')')]"
           ]
         }
       ]
