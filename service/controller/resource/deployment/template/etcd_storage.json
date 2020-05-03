@@ -100,7 +100,7 @@
             "shareQuota": "[parameters('fileShareSizeGB')]"
           },
           "dependsOn":[
-            "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('fileServiceName'))]"
+            "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageAccountName'), variables('fileServiceName'))]"
           ]
         }
       ]
