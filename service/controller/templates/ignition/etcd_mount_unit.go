@@ -1,13 +1,14 @@
 package ignition
 
 const EtcdMountUnit = `[Unit]
-Description=Mounts disk to /var/lib/etcd
+Description=Mounts azure file storage to /var/lib/etcd using CIFS
 Before=etcd3.service
 
 [Mount]
-What=/dev/disk/by-label/etcd
+What=//8tnh2etcd.file.core.windows.net/etcd
 Where=/var/lib/etcd
-Type=ext4
+Type=cifs
+Options=nofail,vers=3.0,credentials=/etc/smbcredentials/8tnh2etcd.cred,serverino
 
 [Install]
 WantedBy=multi-user.target

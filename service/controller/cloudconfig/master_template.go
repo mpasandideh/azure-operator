@@ -193,6 +193,19 @@ func (me *masterExtension) Files() ([]k8scloudconfig.FileAsset, error) {
 			},
 			Permissions: FilePermission,
 		},
+		{
+			AssetContent: fmt.Sprintf("username=%s\npassword=%s\n", "8tnh2etcd", "qmSCaKuVetCEzNKSZUx76D6w6QuyOWqncx9M2E0Kvqeec5bqXNwervHgXa90mGFlnNtOyY/hJsmJG4kDhQf49A=="),
+			Path:         "/etc/smbcredentials/8tnh2etcd.cred",
+			Owner: k8scloudconfig.Owner{
+				Group: k8scloudconfig.Group{
+					Name: FileOwnerGroupName,
+				},
+				User: k8scloudconfig.User{
+					Name: FileOwnerUserName,
+				},
+			},
+			Permissions: FilePermission,
+		},
 	}
 
 	certFiles := certs.NewFilesClusterMaster(me.clusterCerts)
