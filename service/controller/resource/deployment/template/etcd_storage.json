@@ -99,7 +99,13 @@
     }
   ],
   "outputs": {
-    "storageAccountName": "[variables('storageAccountName')]",
-    "fileServiceName": "[variables('fileServiceName')]"
+    "storageAccountName":{
+      "type":"string",
+      "value":"[variables('storageAccountName')]"
+    },
+    "fileServiceName":{
+      "type":"string",
+      "value":"[variables('fileServiceName')]"
+    }
   }
 }
