@@ -39,7 +39,7 @@
     },
     "kind": {
       "type": "string",
-      "defaultValue":"FileStorage"
+      "defaultValue":"StorageV2"
     },
     "storageAccountsAPIVersion":{
       "type":"string",
