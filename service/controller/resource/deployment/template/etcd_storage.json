@@ -55,7 +55,8 @@
   },
   "variables": {
     "storageAccountName":"[concat(parameters('clusterID'), 'etcd')]",
-    "fileServiceName":"etcd"
+    "fileServiceName":"[concat(variables('storageAccountName'), '/etcd')]",
+    "shareName":"[concat(variables('fileServiceName'), '/etcd')]"
   },
   "resources": [
     {
@@ -88,7 +89,7 @@
       },
       "resources": [
         {
-          "name": "[variables('fileServiceName')]",
+          "name": "[variables('shareName')]",
           "type": "shares",
           "apiVersion": "[parameters('fileServicesAPIVersion')]",
           "properties": {
