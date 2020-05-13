@@ -59,6 +59,7 @@ func (c CloudConfig) NewMasterTemplate(ctx context.Context, data IgnitionTemplat
 		}
 
 		params = k8scloudconfig.DefaultParams()
+		params.BaseDomain = fmt.Sprintf("%s.k8s.%s", data.CustomObject.Name, data.CustomObject.Spec.Azure.DNSZones.API.Name)
 		params.APIServerEncryptionKey = apiserverEncryptionKey
 		params.Cluster = data.CustomObject.Spec.Cluster
 		params.DisableCalico = true
@@ -130,7 +131,7 @@ func (c CloudConfig) NewMasterTemplate(ctx context.Context, data IgnitionTemplat
 		return "", microerror.Mask(err)
 	}
 
-	return newCloudConfig(k8scloudconfig.MasterTemplate, params)
+	return newCloudConfig(MasterTemplate, params)
 }
 
 type masterExtension struct {
@@ -251,6 +252,11 @@ func (me *masterExtension) Units() ([]k8scloudconfig.UnitAsset, error) {
 		{
 			AssetContent: ignition.EtcdLBHostsEntry,
 			Name:         "etcd-lb-hosts-entry.service",
+			Enabled:      true,
+		},
+		{
+			AssetContent: ignition.EtcdLocalHostsEntry,
+			Name:         "etcd-local-hosts-entry.service",
 			Enabled:      true,
 		},
 		{

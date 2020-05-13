@@ -32,6 +32,7 @@ import (
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/dnsrecord"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/encryptionkey"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/endpoints"
+	"github.com/giantswarm/azure-operator/v3/service/controller/resource/etcd"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/instance"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/masters"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/namespace"
@@ -287,6 +288,18 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 		}
 	}
 
+	var etcdResource resource.Interface
+	{
+		c := etcd.Config{
+			Logger: config.Logger,
+		}
+
+		etcdResource, err = etcd.New(c)
+		if err != nil {
+			return nil, microerror.Mask(err)
+		}
+	}
+
 	var iwd vmsscheck.InstanceWatchdog
 	{
 		c := vmsscheck.Config{
@@ -421,6 +434,7 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 		deploymentResource,
 		dnsrecordResource,
 		mastersResource,
+		etcdResource,
 		instanceResource,
 		endpointsResource,
 		vpnResource,
