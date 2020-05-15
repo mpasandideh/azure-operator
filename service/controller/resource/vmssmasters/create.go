@@ -1,59 +1,46 @@
-package instance
+package vmssmasters
 
 import (
 	"context"
 	"fmt"
 
-	providerv1alpha1 "github.com/giantswarm/apiextensions/pkg/apis/provider/v1alpha1"
 	"github.com/giantswarm/microerror"
-	"github.com/giantswarm/operatorkit/controller/context/reconciliationcanceledcontext"
 
 	"github.com/giantswarm/azure-operator/v3/service/controller/internal/state"
 	"github.com/giantswarm/azure-operator/v3/service/controller/key"
-	"github.com/giantswarm/azure-operator/v3/service/controller/resource/vmssmasters"
 )
 
 // configureStateMachine configures and returns state machine that is driven by
 // EnsureCreated.
 func (r *Resource) configureStateMachine() {
 	sm := state.Machine{
+		Empty:                          r.emptyStateTransition,
+		CheckFlatcarMigrationNeeded:    r.checkFlatcarMigrationNeededTransition,
+		WaitForBackupConfirmation:      r.waitForBackupConfirmationTransition,
+		DeallocateLegacyInstance:       r.deallocateLegacyInstanceTransition,
+		BlockAPICalls:                  r.blockAPICallsTransition,
 		DeploymentUninitialized:        r.deploymentUninitializedTransition,
 		DeploymentInitialized:          r.deploymentInitializedTransition,
+		ManualInterventionRequired:     r.manualInterventionRequiredTransition,
 		ProvisioningSuccessful:         r.provisioningSuccessfulTransition,
 		ClusterUpgradeRequirementCheck: r.clusterUpgradeRequirementCheckTransition,
-		ScaleUpWorkerVMSS:              r.scaleUpWorkerVMSSTransition,
-
-		WaitNewVMSSWorkers: r.waitNewVMSSWorkersTransition,
-
-		CordonOldVMSS:    r.cordonOldVMSSTransition,
-		CordonOldWorkers: r.cordonOldWorkersTransition,
-
-		WaitForWorkersToBecomeReady: r.waitForWorkersToBecomeReadyTransition,
-
-		DrainOldVMSS:        r.drainOldVMSSTransition,
-		DrainOldWorkerNodes: r.drainOldWorkerNodesTransition,
-
-		TerminateOldVMSS:            r.terminateOldVmssTransition,
-		TerminateOldWorkerInstances: r.terminateOldWorkersTransition,
-
-		ScaleDownWorkerVMSS: r.scaleDownWorkerVMSSTransition,
-		DeploymentCompleted: r.deploymentCompletedTransition,
+		MasterInstancesUpgrading:       r.masterInstancesUpgradingTransition,
+		WaitForMastersToBecomeReady:    r.waitForMastersToBecomeReadyTransition,
+		WaitForRestore:                 r.waitForRestoreTransition,
+		DeleteLegacyVMSS:               r.deleteLegacyVMSSTransition,
+		UnblockAPICalls:                r.unblockAPICallsTransition,
+		RestartKubeletOnWorkers:        r.restartKubeletOnWorkersTransition,
+		DeploymentCompleted:            r.deploymentCompletedTransition,
 	}
 
 	r.stateMachine = sm
 }
 
-// This resource applies the ARM template for the worker instances, monitors the process and handles upgrades.
+// This resource applies the ARM template for the master instances, monitors the process and handles upgrades.
 func (r *Resource) EnsureCreated(ctx context.Context, obj interface{}) error {
 	cr, err := key.ToCustomResource(obj)
 	if err != nil {
 		return microerror.Mask(err)
-	}
-
-	if isMasterUpgrading(cr) {
-		r.logger.LogCtx(ctx, "level", "debug", "message", "master is upgrading")
-		r.logger.LogCtx(ctx, "level", "debug", "message", "canceling reconciliation")
-		return nil
 	}
 
 	var newState state.State
@@ -81,29 +68,9 @@ func (r *Resource) EnsureCreated(ctx context.Context, obj interface{}) error {
 		}
 		r.logger.LogCtx(ctx, "level", "debug", "message", fmt.Sprintf("set resource status to '%s/%s'", Stage, newState))
 		r.logger.LogCtx(ctx, "level", "debug", "message", "canceling reconciliation")
-		reconciliationcanceledcontext.SetCanceled(ctx)
 	} else {
 		r.logger.LogCtx(ctx, "level", "debug", "message", "no state change")
 	}
 
 	return nil
-}
-
-func isMasterUpgrading(cr providerv1alpha1.AzureConfig) bool {
-	var status string
-	{
-		for _, r := range cr.Status.Cluster.Resources {
-			if r.Name != vmssmasters.Name {
-				continue
-			}
-
-			for _, c := range r.Conditions {
-				if c.Type == Stage {
-					status = c.Status
-				}
-			}
-		}
-	}
-
-	return status != DeploymentCompleted
 }

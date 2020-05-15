@@ -34,7 +34,6 @@ import (
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/endpoints"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/etcd"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/instance"
-	"github.com/giantswarm/azure-operator/v3/service/controller/resource/masters"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/namespace"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/release"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/resourcegroup"
@@ -314,23 +313,23 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 		}
 	}
 
-	var mastersResource resource.Interface
-	{
-		c := masters.Config{
-			Debugger:  newDebugger,
-			G8sClient: config.K8sClient.G8sClient(),
-			K8sClient: config.K8sClient.K8sClient(),
-			Logger:    config.Logger,
-
-			Azure:            config.Azure,
-			InstanceWatchdog: iwd,
-		}
-
-		mastersResource, err = masters.New(c)
-		if err != nil {
-			return nil, microerror.Mask(err)
-		}
-	}
+	//var mastersResource resource.Interface
+	//{
+	//	c := vmssmasters.Config{
+	//		Debugger:  newDebugger,
+	//		G8sClient: config.K8sClient.G8sClient(),
+	//		K8sClient: config.K8sClient.K8sClient(),
+	//		Logger:    config.Logger,
+	//
+	//		Azure:            config.Azure,
+	//		InstanceWatchdog: iwd,
+	//	}
+	//
+	//	mastersResource, err = vmssmasters.New(c)
+	//	if err != nil {
+	//		return nil, microerror.Mask(err)
+	//	}
+	//}
 
 	var instanceResource resource.Interface
 	{

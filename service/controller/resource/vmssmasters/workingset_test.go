@@ -1,4 +1,4 @@
-package masters
+package vmssmasters
 
 import (
 	"testing"

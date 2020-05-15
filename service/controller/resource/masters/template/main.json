@@ -14,6 +14,12 @@
         "description":"Version of the azure operator that created the deployment."
       }
     },
+    "cloudConfigData":{
+      "type":"secureString",
+      "metadata":{
+        "description":"Base64-encoded cloud-config data."
+      }
+    },
     "clusterID":{
       "type":"string",
       "metadata":{
@@ -32,12 +38,6 @@
         "provider":"F80D01C0-7AAC-4440-98F6-5061511962AD"
       }
     },
-    "masterCloudConfigData":{
-      "type":"secureString",
-      "metadata":{
-        "description":"Base64-encoded cloud-config data."
-      }
-    },
     "masterNodes":{
       "type":"array"
     },
@@ -47,7 +47,7 @@
         "description":"Output value of the master subnet ID as referenced from the virtual network setup."
       }
     },
-    "vmssMSIEnabled":{
+    "MSIEnabled":{
       "type":"bool"
     },
     "zones":{
@@ -150,7 +150,7 @@
     {
       "apiVersion":"[variables('apiVersion')]",
       "type":"Microsoft.Resources/deployments",
-      "name":"master-vmss-deploy",
+      "name":"master-vms-deployment",
       "properties":{
         "expressionEvaluationOptions":{
           "scope": "inner"
@@ -166,66 +166,29 @@
             "azureOperatorVersion":{
               "type":"string"
             },
+            "customData":{
+              "type":"string"
+            },
             "GiantSwarmTags":{
               "type":"object",
               "defaultValue":{
                 "provider":"F80D01C0-7AAC-4440-98F6-5061511962AD"
               }
             },
-            "vmssMSIEnabled":{
+            "LbBackendPools":{
+              "type":"array"
+            },
+            "masterNodes":{
+              "type":"array"
+            },
+            "MSIEnabled":{
               "type":"bool"
             },
-            "vmssName":{
+            "vmNamePrefix":{
               "type":"string"
             },
-            "vmssVmSize":{
+            "vnetSubnetId":{
               "type":"string"
-            },
-            "vmssVmCount":{
-              "type":"int",
-              "minValue":1,
-              "maxValue":100
-            },
-            "vmssVmDataDisks":{
-              "type":"array"
-            },
-            "vmssSshUser":{
-              "type":"string"
-            },
-            "vmssSshPublicKey":{
-              "type":"string"
-            },
-            "vmssOsImagePublisher":{
-              "type":"string"
-            },
-            "vmssOsImageOffer":{
-              "type":"string"
-            },
-            "vmssOsImageSKU":{
-              "type":"string"
-            },
-            "vmssOsImageVersion":{
-              "type":"string"
-            },
-            "vmssOverprovision":{
-              "type":"string",
-              "defaultValue":"true"
-            },
-            "vmssStorageAccountType":{
-              "type":"string"
-            },
-            "vmssVmCustomData":{
-              "type":"securestring"
-            },
-            "vmssLbBackendPools":{
-              "type":"array"
-            },
-            "vmssVnetSubnetId":{
-              "type":"string"
-            },
-            "vmssUpgradePolicy":{
-              "type":"string",
-              "defaultValue":"Manual"
             },
             "zones":{
               "type":"array",
@@ -237,11 +200,10 @@
           },
           "variables":{
             "authorizationAPIVersion":"2017-05-01",
-            "computeAPIVersion":"2019-07-01",
+            "computeAPIVersion":"2019-12-01",
             "contributorRoleDefinitionGUID":"b24988ac-6180-42a0-ab88-20f7382dd24c",
             "contributorRoleDefinitionId":"[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('contributorRoleDefinitionGUID'))]",
-            "roleAssignmentName":"[guid(concat(parameters('vmssName'), '-', 'roleassignment'))]",
-            "vmssExtensions":[
+            "extensions":[
               {
                 "name":"MSILinuxExtension",
                 "properties":{
@@ -258,100 +220,134 @@
                 }
               }
             ],
-            "vmssResourceId":"[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('vmssName'))]",
-            "vmssSinglePlacementGroup":"true",
-            "vmssVmNamePrefix":"[concat(toLower(parameters('vmssName')), '-')]"
+            "roleAssignmentName":"[guid(concat(parameters('vmssName'), '-', 'roleassignment'))]"
           },
           "resources":[
             {
+              "apiVersion": "2018-03-01",
+              "type": "Microsoft.Network/networkInterfaces",
+              "name": "[concat(parameters('vmNamePrefix'), copyIndex()]",
+              "location": "[parameters('location')]",
+              "dependsOn": [],
+              "copy":{
+                "name":"masterniccopy",
+                "count":"[length(parameters('masterNodes'))]",
+                "mode":"parallel"
+              },
+              "properties": {
+                "enableIPForwarding":true,
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig1",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                        "id": "[parameters('vnetSubnetId')]"
+                      },
+                      "loadBalancerBackendAddressPools":"[parameters('LbBackendPools')]"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name":"[concat(parameters('vmNamePrefix'), copyIndex()]",
               "apiVersion":"[variables('computeAPIVersion')]",
-              "type":"Microsoft.Compute/virtualMachineScaleSets",
-              "name":"[parameters('vmssName')]",
+              "type":"Microsoft.Compute/virtualMachines",
               "location":"[parameters('location')]",
-              "zones": "[if(greater(length(parameters('zones')),0), parameters('zones'), json('null'))]",
               "tags":{
                 "provider":"[toUpper(parameters('GiantSwarmTags').provider)]",
-                "cluster-autoscaler-enabled":"true",
-                "cluster-autoscaler-name":"[parameters('vmssName')]",
                 "gs-azure-operator.giantswarm.io-version":"[parameters('azureOperatorVersion')]"
               },
-              "sku":{
-                "name":"[parameters('vmssVmSize')]",
-                "tier":"Standard",
-                "capacity":"[int(parameters('vmssVmCount'))]"
+              "plan": {
+                "name":"[parameters('masterNodes')[copyIndex()].osImage.sku]",
+                "publisher":"[parameters('masterNodes')[copyIndex()].osImage.publisher]",
+                "product":"[parameters('masterNodes')[copyIndex()].osImage.offer]"
               },
               "identity":{
-                "type":"[if(parameters('vmssMSIEnabled'), 'systemAssigned', 'None')]"
+                "type":"[if(parameters('MSIEnabled'), 'systemAssigned', 'None')]"
               },
-              "plan": {
-                "name":"[parameters('vmssOsImageSKU')]",
-                "publisher":"[parameters('vmssOsImagePublisher')]",
-                "product":"[parameters('vmssOsImageOffer')]"
+              "zones":"[if(greater(length(parameters('zones')),0), parameters('zones'), json('null'))]",
+              "copy":{
+                "name":"mastervmcopy",
+                "count":"[length(parameters('masterNodes'))]",
+                "mode":"parallel"
               },
-              "properties":{
-                "overprovision":"[parameters('vmssOverprovision')]",
-                "upgradePolicy":{
-                  "mode":"[parameters('vmssUpgradePolicy')]"
+              "resources":"[if(parameters('MSIEnabled'), variables('extensions'), json('[]'))]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('masterNodes')[copyIndex()].vmSize]"
                 },
-                "singlePlacementGroup":"[variables('vmssSinglePlacementGroup')]",
-                "virtualMachineProfile":{
-                  "osProfile":{
-                    "adminUsername":"[parameters('vmssSshUser')]",
-                    "computerNamePrefix":"[variables('vmssVmNamePrefix')]",
-                    "customData":"[parameters('vmssVmCustomData')]",
-                    "linuxConfiguration":{
-                      "disablePasswordAuthentication":"true",
-                      "ssh":{
-                        "publicKeys":[
-                          {
-                            "keyData":"[parameters('vmssSshPublicKey')]",
-                            "path":"[concat('/home/', parameters('vmssSshUser'), '/.ssh/authorized_keys')]"
-                          }
-                        ]
-                      }
+                "storageProfile": {
+                  "imageReference": "[parameters('masterNodes')[copyIndex()].osImage]",
+                  "osDisk": {
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "[if(contains(variables('vmssStandardLrsSize'), parameters('masterNodes')[copyIndex()].vmSize), 'Standard_LRS', 'Premium_LRS')]"
                     }
                   },
-                  "storageProfile":{
-                    "imageReference":{
-                      "publisher":"[parameters('vmssOsImagePublisher')]",
-                      "offer":"[parameters('vmssOsImageOffer')]",
-                      "sku":"[parameters('vmssOsImageSKU')]",
-                      "version":"[parameters('vmssOsImageVersion')]"
+                  "dataDisks": [
+                    {
+                      "caching": "ReadWrite",
+                      "createOption": "Empty",
+                      "diskSizeGB": 100,
+                      "managedDisk": {
+                        "storageAccountType": "[if(contains(variables('vmssStandardLrsSize'), parameters('masterNodes')[copyIndex()].vmSize), 'Standard_LRS', 'Premium_LRS')]"
+                      },
+                      "lun": 0,
+                      "name": "concat('etcd-', copyIndex()]"
                     },
-                    "osDisk":{
-                      "caching":"ReadWrite",
-                      "createOption":"FromImage",
-                      "managedDisk":{
-                        "storageAccountType":"[parameters('vmssStorageAccountType')]"
-                      }
+                    {
+                      "caching": "ReadWrite",
+                      "createOption": "Empty",
+                      "diskSizeGB": "[if(greater(parameters('masterNodes')[copyIndex()].dockerVolumeSizeGB, 0), parameters('masterNodes')[copyIndex()].dockerVolumeSizeGB, 50)]",
+                      "managedDisk": {
+                        "storageAccountType": "[if(contains(variables('vmssStandardLrsSize'), parameters('masterNodes')[copyIndex()].vmSize), 'Standard_LRS', 'Premium_LRS')]"
+                      },
+                      "lun": 1,
+                      "name": "concat('docker-', copyIndex()]"
                     },
-                    "dataDisks":"[parameters('vmssVmDataDisks')]"
-                  },
-                  "networkProfile":{
-                    "networkInterfaceConfigurations":[
-                      {
-                        "name":"[concat(parameters('vmssName'), '-nic')]",
-                        "properties":{
-                          "enableIPForwarding":true,
-                          "primary":"true",
-                          "ipConfigurations":[
-                            {
-                              "name":"[concat(parameters('vmssName'), '-ipconfig')]",
-                              "properties":{
-                                "subnet":{
-                                  "id":"[parameters('vmssVnetSubnetId')]"
-                                },
-                                "loadBalancerBackendAddressPools":"[parameters('vmssLbBackendPools')]"
-                              }
-                            }
-                          ]
+                    {
+                      "caching": "ReadWrite",
+                      "createOption": "Empty",
+                      "diskSizeGB": "[if(greater(parameters('masterNodes')[copyIndex()].kubeletVolumeSizeGB, 0), parameters('masterNodes')[copyIndex()].kubeletVolumeSizeGB, 100)]",
+                      "managedDisk": {
+                        "storageAccountType": "[if(contains(variables('vmssStandardLrsSize'), parameters('masterNodes')[copyIndex()].vmSize), 'Standard_LRS', 'Premium_LRS')]"
+                      },
+                      "lun": 2,
+                      "name": "concat('kubelet-', copyIndex()]"
+                    }
+                  ]
+                },
+                "additionalCapabilities": {
+                  "ultraSSDEnabled": "true"
+                },
+                "osProfile": {
+                  "computerName": "[concat(parameters('vmNamePrefix'), copyIndex()]",
+                  "adminUsername": "[parameters('masterNodes')[copyIndex()].adminUsername]",
+                  "customData": "[parameters('customData')]",
+                  "linuxConfiguration": {
+                    "disablePasswordAuthentication": "true",
+                    "ssh": {
+                      "publicKeys": [
+                        {
+                          "keyData": "[parameters('masterNodes')[copyIndex()].adminSSHKeyData]",
+                          "path": "[concat('/home/', parameters('masterNodes')[copyIndex()].adminUsername, '/.ssh/authorized_keys')]"
                         }
-                      }
-                    ]
-                  },
-                  "extensionProfile":{
-                    "extensions":"[if(parameters('vmssMSIEnabled'), variables('vmssExtensions'), json('[]'))]"
+                      ]
+                    }
                   }
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('vmNamePrefix'), copyIndex())]",
+                      "properties": {
+                        "primary": true
+                      }
+                    }
+                  ]
                 }
               }
             },
@@ -365,8 +361,13 @@
               },
               "properties":{
                 "roleDefinitionId":"[variables('contributorRoleDefinitionId')]",
-                "principalId":"[if(parameters('vmssMSIEnabled'), reference(concat(resourceId('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmssName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId, '')]",
+                "principalId":"[if(parameters('MSIEnabled'), reference(concat(resourceId('Microsoft.Compute/virtualMachines/', parameters('vmNamePrefix'), copyIndex(),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId, '')]",
                 "scope":"[resourceGroup().id]"
+              },
+              "copy":{
+                "name":"masterrolecopy",
+                "count":"[length(parameters('masterNodes'))]",
+                "mode":"parallel"
               }
             }
           ]
@@ -378,83 +379,13 @@
           "azureOperatorVersion":{
             "value":"[parameters('azureOperatorVersion')]"
           },
+          "customData":{
+            "value":"[parameters('cloudConfigData')]"
+          },
           "GiantSwarmTags":{
             "value":"[parameters('GiantSwarmTags')]"
           },
-          "vmssName":{
-            "value":"[concat(parameters('clusterID'), '-master-', parameters('clusterID'))]"
-          },
-          "vmssMSIEnabled":{
-            "value":"[parameters('vmssMSIEnabled')]"
-          },
-          "vmssVmSize":{
-            "value":"[parameters('masterNodes')[0].vmSize]"
-          },
-          "vmssVmCount":{
-            "value":"[length(parameters('masterNodes'))]"
-          },
-          "vmssStorageAccountType":{
-            "value":"[if(contains(variables('vmssStandardLrsSize'), parameters('masterNodes')[0].vmSize), 'Standard_LRS', 'Premium_LRS')]"
-          },
-          "vmssVmDataDisks":{
-            "value":[
-              {
-                "caching": "ReadWrite",
-                "createOption": "Empty",
-                "diskSizeGB": 100,
-                "managedDisk":
-                {
-                  "storageAccountType": "[if(contains(variables('vmssStandardLrsSize'), parameters('masterNodes')[0].vmSize), 'Standard_LRS', 'Premium_LRS')]"
-                },
-                "lun": 0
-              },
-              {
-                "caching": "ReadWrite",
-                "createOption": "Empty",
-                "diskSizeGB": "[if(greater(parameters('masterNodes')[0].dockerVolumeSizeGB, 0), parameters('masterNodes')[0].dockerVolumeSizeGB, 50)]",
-                "managedDisk":
-                {
-                  "storageAccountType": "[if(contains(variables('vmssStandardLrsSize'), parameters('masterNodes')[0].vmSize), 'Standard_LRS', 'Premium_LRS')]"
-                },
-                "lun": 1
-              },
-              {
-                "caching": "ReadWrite",
-                "createOption": "Empty",
-                "diskSizeGB": "[if(greater(parameters('masterNodes')[0].kubeletVolumeSizeGB, 0), parameters('masterNodes')[0].kubeletVolumeSizeGB, 100)]",
-                "managedDisk":
-                {
-                  "storageAccountType": "[if(contains(variables('vmssStandardLrsSize'), parameters('masterNodes')[0].vmSize), 'Standard_LRS', 'Premium_LRS')]"
-                },
-                "lun": 2
-              }
-            ]
-          },
-          "vmssSshUser":{
-            "value":"[parameters('masterNodes')[0].adminUsername]"
-          },
-          "vmssSshPublicKey":{
-            "value":"[parameters('masterNodes')[0].adminSSHKeyData]"
-          },
-          "vmssOsImagePublisher":{
-            "value":"[parameters('masterNodes')[0].osImage.publisher]"
-          },
-          "vmssOsImageOffer":{
-            "value":"[parameters('masterNodes')[0].osImage.offer]"
-          },
-          "vmssOsImageSKU":{
-            "value":"[parameters('masterNodes')[0].osImage.sku]"
-          },
-          "vmssOsImageVersion":{
-            "value":"[parameters('masterNodes')[0].osImage.version]"
-          },
-          "vmssOverprovision":{
-            "value":"false"
-          },
-          "vmssVmCustomData":{
-            "value":"[parameters('masterCloudConfigData')]"
-          },
-          "vmssLbBackendPools":{
+          "LbBackendPools":{
             "value":[
               {
                 "id":"[parameters('apiLBBackendPoolID')]"
@@ -464,11 +395,17 @@
               }
             ]
           },
-          "vmssVnetSubnetId":{
-            "value":"[parameters('masterSubnetID')]"
+          "masterNodes":{
+            "value":"[parameters('masterNodes')]"
           },
-          "vmssUpgradePolicy":{
-            "value":"Manual"
+          "MSIEnabled":{
+            "value":"[parameters('MSIEnabled')]"
+          },
+          "vmNamePrefix":{
+            "value":"[concat(parameters('clusterID'), '-master-')]"
+          },
+          "vnetSubnetId":{
+            "value":"[parameters('masterSubnetID')]"
           },
           "zones":{
             "value":"[parameters('zones')]"

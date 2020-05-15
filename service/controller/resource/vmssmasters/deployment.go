@@ -1,4 +1,4 @@
-package masters
+package vmssmasters
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/giantswarm/azure-operator/v3/service/controller/blobclient"
 	"github.com/giantswarm/azure-operator/v3/service/controller/controllercontext"
 	"github.com/giantswarm/azure-operator/v3/service/controller/key"
-	"github.com/giantswarm/azure-operator/v3/service/controller/resource/masters/template"
+	"github.com/giantswarm/azure-operator/v3/service/controller/resource/vmssmasters/template"
 )
 
 func (r Resource) newDeployment(ctx context.Context, obj providerv1alpha1.AzureConfig, overwrites map[string]interface{}, location string) (azureresource.Deployment, error) {
