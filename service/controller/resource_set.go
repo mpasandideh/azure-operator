@@ -32,15 +32,13 @@ import (
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/dnsrecord"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/encryptionkey"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/endpoints"
-	"github.com/giantswarm/azure-operator/v3/service/controller/resource/etcd"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/instance"
+	"github.com/giantswarm/azure-operator/v3/service/controller/resource/masters"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/namespace"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/release"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/resourcegroup"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/service"
 	"github.com/giantswarm/azure-operator/v3/service/controller/resource/tenantclients"
-	"github.com/giantswarm/azure-operator/v3/service/controller/resource/vpn"
-	"github.com/giantswarm/azure-operator/v3/service/controller/resource/vpnconnection"
 	"github.com/giantswarm/azure-operator/v3/service/controller/setting"
 	"github.com/giantswarm/azure-operator/v3/service/credential"
 	"github.com/giantswarm/azure-operator/v3/service/network"
@@ -287,17 +285,17 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 		}
 	}
 
-	var etcdResource resource.Interface
-	{
-		c := etcd.Config{
-			Logger: config.Logger,
-		}
-
-		etcdResource, err = etcd.New(c)
-		if err != nil {
-			return nil, microerror.Mask(err)
-		}
-	}
+	//var etcdResource resource.Interface
+	//{
+	//	c := etcd.Config{
+	//		Logger: config.Logger,
+	//	}
+	//
+	//	etcdResource, err = etcd.New(c)
+	//	if err != nil {
+	//		return nil, microerror.Mask(err)
+	//	}
+	//}
 
 	var iwd vmsscheck.InstanceWatchdog
 	{
@@ -313,23 +311,23 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 		}
 	}
 
-	//var mastersResource resource.Interface
-	//{
-	//	c := vmssmasters.Config{
-	//		Debugger:  newDebugger,
-	//		G8sClient: config.K8sClient.G8sClient(),
-	//		K8sClient: config.K8sClient.K8sClient(),
-	//		Logger:    config.Logger,
-	//
-	//		Azure:            config.Azure,
-	//		InstanceWatchdog: iwd,
-	//	}
-	//
-	//	mastersResource, err = vmssmasters.New(c)
-	//	if err != nil {
-	//		return nil, microerror.Mask(err)
-	//	}
-	//}
+	var mastersResource resource.Interface
+	{
+		c := masters.Config{
+			Debugger:  newDebugger,
+			G8sClient: config.K8sClient.G8sClient(),
+			K8sClient: config.K8sClient.K8sClient(),
+			Logger:    config.Logger,
+
+			Azure:            config.Azure,
+			InstanceWatchdog: iwd,
+		}
+
+		mastersResource, err = masters.New(c)
+		if err != nil {
+			return nil, microerror.Mask(err)
+		}
+	}
 
 	var instanceResource resource.Interface
 	{
@@ -385,40 +383,40 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 		}
 	}
 
-	var vpnResource resource.Interface
-	{
-		c := vpn.Config{
-			Debugger: newDebugger,
-			Logger:   config.Logger,
-
-			Azure: config.Azure,
-		}
-
-		vpnResource, err = vpn.New(c)
-		if err != nil {
-			return nil, microerror.Mask(err)
-		}
-	}
-
-	var vpnconnectionResource resource.Interface
-	{
-		c := vpnconnection.Config{
-			Logger: config.Logger,
-
-			Azure:                    config.Azure,
-			HostAzureClientSetConfig: config.HostAzureClientSetConfig,
-		}
-
-		ops, err := vpnconnection.New(c)
-		if err != nil {
-			return nil, microerror.Mask(err)
-		}
-
-		vpnconnectionResource, err = toCRUDResource(config.Logger, ops)
-		if err != nil {
-			return nil, microerror.Mask(err)
-		}
-	}
+	//var vpnResource resource.Interface
+	//{
+	//	c := vpn.Config{
+	//		Debugger: newDebugger,
+	//		Logger:   config.Logger,
+	//
+	//		Azure: config.Azure,
+	//	}
+	//
+	//	vpnResource, err = vpn.New(c)
+	//	if err != nil {
+	//		return nil, microerror.Mask(err)
+	//	}
+	//}
+	//
+	//var vpnconnectionResource resource.Interface
+	//{
+	//	c := vpnconnection.Config{
+	//		Logger: config.Logger,
+	//
+	//		Azure:                    config.Azure,
+	//		HostAzureClientSetConfig: config.HostAzureClientSetConfig,
+	//	}
+	//
+	//	ops, err := vpnconnection.New(c)
+	//	if err != nil {
+	//		return nil, microerror.Mask(err)
+	//	}
+	//
+	//	vpnconnectionResource, err = toCRUDResource(config.Logger, ops)
+	//	if err != nil {
+	//		return nil, microerror.Mask(err)
+	//	}
+	//}
 
 	resources := []resource.Interface{
 		statusResource,
@@ -433,11 +431,11 @@ func NewResourceSet(config ResourceSetConfig) (*controller.ResourceSet, error) {
 		deploymentResource,
 		dnsrecordResource,
 		mastersResource,
-		etcdResource,
+		//etcdResource,
 		instanceResource,
 		endpointsResource,
-		vpnResource,
-		vpnconnectionResource,
+		//vpnResource,
+		//vpnconnectionResource,
 	}
 
 	{

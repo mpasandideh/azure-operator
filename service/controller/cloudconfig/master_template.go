@@ -131,7 +131,7 @@ func (c CloudConfig) NewMasterTemplate(ctx context.Context, data IgnitionTemplat
 		return "", microerror.Mask(err)
 	}
 
-	return newCloudConfig(MasterTemplate, params)
+	return newCloudConfig(k8scloudconfig.MasterTemplate, params)
 }
 
 type masterExtension struct {

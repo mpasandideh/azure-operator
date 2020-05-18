@@ -1,6 +1,7 @@
 package masters
 
 import (
+	"github.com/Azure/go-autorest/autorest"
 	"github.com/giantswarm/microerror"
 )
 
@@ -11,6 +12,34 @@ var clientNotFoundError = &microerror.Error{
 // IsClientNotFound asserts clientNotFoundError.
 func IsClientNotFound(err error) bool {
 	return microerror.Cause(err) == clientNotFoundError
+}
+
+var deploymentNotFoundError = &microerror.Error{
+	Kind: "deploymentNotFoundError",
+}
+
+// IsDeploymentNotFound asserts deploymentNotFoundError.
+func IsDeploymentNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	c := microerror.Cause(err)
+
+	if c == deploymentNotFoundError {
+		return true
+	}
+
+	{
+		dErr, ok := c.(autorest.DetailedError)
+		if ok {
+			if dErr.StatusCode == 404 {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // executionFailedError is an error type for situations where Resource
